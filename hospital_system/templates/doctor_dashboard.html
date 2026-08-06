@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Dashboard - Hospital Management System{% endblock %}
+
+{% block header_title %}Doctor Dashboard{% endblock %}
+
+{% block content %}
+<div class="fade-up">
+    <!-- Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="stat-icon" style="background: var(--blue-pale); color: var(--blue);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="label" style="font-size: 11px;">Assigned Patients</div>
+                    <h2 class="h4 mb-0">{{ patients_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="stat-icon" style="background: var(--amber-pale); color: var(--amber);">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="label" style="font-size: 11px;">Pending Appointments</div>
+                    <h2 class="h4 mb-0">{{ pending_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stat-card">
+                <div class="stat-icon" style="background: var(--green-pale); color: var(--green);">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="label" style="font-size: 11px;">Total Consultations</div>
+                    <h2 class="h4 mb-0">{{ visits_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card h-100 card-hover">
+                <div class="card-body p-4">
+                    <div class="stat-icon mb-3" style="background: var(--blue-pale); color: var(--blue); width: 48px; height: 48px; font-size: 20px;">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">My Patients</h4>
+                    <p class="text-muted small mb-4">Access detailed medical history, treatment plans, and ongoing records for all your assigned patients.</p>
+                    <a href="{{ url_for('doctor.doctor_patients') }}" class="btn btn-primary w-100">
+                        View Patients <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100 card-hover">
+                <div class="card-body p-4">
+                    <div class="stat-icon mb-3" style="background: var(--amber-pale); color: var(--amber); width: 48px; height: 48px; font-size: 20px;">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">Appointments</h4>
+                    <p class="text-muted small mb-4">Manage your daily schedule, accept new booking requests, and update the status of current consultations.</p>
+                    <a href="{{ url_for('doctor.doctor_appointments') }}" class="btn btn-green w-100">
+                        View Appointments <i class="fas fa-arrow-right ms-2"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Section -->
+    <div class="row g-4 mt-2">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-bell me-2 text-green"></i> Recent Notifications</h5>
+                </div>
+                <div class="card-body py-4">
+                    {% if notifications %}
+                        <div class="list-group list-group-flush">
+                            {% for n in notifications %}
+                                <div class="list-group-item px-0 py-3 border-0 border-bottom">
+                                    <div class="d-flex align-items-start gap-3">
+                                        <div class="stat-icon flex-shrink-0" style="width: 40px; height: 40px; font-size: 16px; 
+                                            background: var(--gray-pale); color: var(--gray-900);">
+                                            {% if n.type == 'appointment' %}<i class="fas fa-calendar-check"></i>
+                                            {% elif n.type == 'visit_update' %}<i class="fas fa-notes-medical"></i>
+                                            {% elif n.type == 'reminder' %}<i class="fas fa-clock"></i>
+                                            {% else %}<i class="fas fa-bell"></i>{% endif %}
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span class="badge rounded-pill bg-dark bg-opacity-10 text-dark" style="font-size: 10px;">
+                                                    {{ n.type|replace('_', ' ')|title }}
+                                                </span>
+                                                <small class="text-muted" style="font-size: 11px;">{{ n.created_at.strftime('%d %b, %H:%M') }}</small>
+                                            </div>
+                                            <p class="mb-0 text-dark fw-medium" style="font-size: 14px;">{{ n.message }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="notification-container text-muted text-center">
+                            <i class="fas fa-check-circle fa-2x mb-2 text-green-mid" style="opacity: 0.5;"></i>
+                            <p class="mb-0">You're all caught up! No new notifications.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+setInterval(function () {
+    if (document.visibilityState !== 'visible') return;
+    if (document.querySelector('.modal.show')) return;
+    window.location.reload();
+}, 20000);
+</script>
+{% endblock %}

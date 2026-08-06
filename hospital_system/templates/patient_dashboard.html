@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Dashboard - Hospital Management System{% endblock %}
+
+{% block header_title %}My Health Overview{% endblock %}
+
+{% block content %}
+<div class="fade-up">
+    {% if patient %}
+    <!-- Notifications Reminders -->
+    {% if notifications %}
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card border-amber">
+                <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold text-amber"><i class="fas fa-bell me-2"></i> Important Reminders</h6>
+                </div>
+                <div class="card-body py-2">
+                    {% for n in notifications %}
+                    <div class="d-flex align-items-center gap-3 py-2 {% if not loop.last %}border-bottom{% endif %}">
+                        <div class="p-2 rounded-circle bg-amber-pale text-amber">
+                            <i class="fas {% if n.type == 'reminder' %}fa-calendar-day{% else %}fa-info-circle{% endif %} small"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <p class="mb-0 small fw-bold">{{ n.message }}</p>
+                            <small class="text-muted" style="font-size: 10px;">{{ n.created_at|dmydt }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Profile & Health Overview -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-12">
+            <div class="card p-4" style="background: linear-gradient(135deg, var(--green-pale), #fff);">
+                <div class="d-flex align-items-center gap-4">
+                    {% if patient.photo_path %}
+                    <img src="{{ url_for('static', filename=patient.photo_path) }}" alt="Patient Photo"
+                         style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);">
+                    {% else %}
+                    <div class="avatar-circle" style="width: 80px; height: 80px; background: var(--green); font-size: 32px;">
+                        {{ session.get('username')[0]|upper if session.get('username') else 'P' }}
+                    </div>
+                    {% endif %}
+                    <div>
+                        <h2 class="mb-1 fw-bold">Welcome, {{ session.get('username', 'Patient') }}!</h2>
+                        <p class="text-muted mb-0">ID: #{{ patient.patient_id }} · {{ patient.age or 'N/A' }} years · {{ patient.gender or 'N/A' }}</p>
+                    </div>
+                    <div class="ms-auto">
+                        <a href="{{ url_for('patient.patient_profile') }}" class="btn btn-outline-primary me-2">
+                            <i class="fas fa-user-edit me-2"></i> Edit Profile
+                        </a>
+                        <a href="{{ url_for('patient.book_appointment') }}" class="btn btn-primary">
+                            <i class="fas fa-calendar-plus me-2"></i> Book Appointment
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="stat-icon" style="background: var(--green-pale); color: var(--green);">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="label" style="font-size: 11px;">Visits Done</div>
+                    <h2 class="h4 mb-0">{{ visits_done_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Progress Tracker -->
+    {% if recent_history %}
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-chart-line me-2 text-green"></i> My Health Progress</h5>
+                    <a href="{{ url_for('patient.view_appointments') }}" class="text-green small text-decoration-none fw-bold">View All Records <i class="fas fa-chevron-right ms-1"></i></a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Date</th>
+                                    <th>Blood Pressure</th>
+                                    <th>Weight</th>
+                                    <th class="pe-4">Progress Note</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for h in recent_history %}
+                                <tr>
+                                    <td class="ps-4 fw-medium">{{ h.appointment_date|dmy }}</td>
+                                    <td><span class="badge" style="background: var(--blue-pale); color: var(--blue);">{{ h.bp }}</span></td>
+                                    <td><span class="badge" style="background: var(--green-pale); color: var(--green);">{{ h.weight }}</span></td>
+                                    <td class="pe-4 small text-muted">{{ h.treatment|truncate(60) or 'N/A' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4 mb-4">
+        <!-- Health Stats -->
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="stat-icon" style="background: var(--red-pale); color: var(--red);">
+                    <i class="fas fa-tint"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="label" style="font-size: 11px;">Blood Group</div>
+                    <h2 class="h4 mb-0">{{ patient.blood_group or '—' }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="stat-icon" style="background: var(--blue-pale); color: var(--blue);">
+                    <i class="fas fa-virus"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="label" style="font-size: 11px;">Disease</div>
+                    <h2 class="h5 mb-0 text-truncate" style="max-width: 120px;">{{ patient.disease or 'None' }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="stat-icon" style="background: var(--amber-pale); color: var(--amber);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="label" style="font-size: 11px;">Risk Level</div>
+                    <h2 class="h4 mb-0">
+                        {% if patient.health_risk_level == 'Low' %}
+                            <span class="text-success">Low</span>
+                        {% elif patient.health_risk_level == 'Medium' %}
+                            <span class="text-warning">Medium</span>
+                        {% elif patient.health_risk_level == 'High' %}
+                            <span class="text-danger">High</span>
+                        {% else %}
+                            <span class="text-muted">N/A</span>
+                        {% endif %}
+                    </h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="stat-icon" style="background: var(--green-pale); color: var(--green);">
+                    <i class="fas fa-user-md"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="label" style="font-size: 11px;">My Doctor</div>
+                    <h2 class="h5 mb-0 text-truncate" style="max-width: 120px;">{{ patient.doctor_name or 'Not Assigned' }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card">
+                <div class="stat-icon" style="background: var(--purple-pale); color: var(--purple);">
+                    <i class="fas fa-rupee-sign"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="label" style="font-size: 11px;">Total Paid</div>
+                    <h2 class="h4 mb-0">₹{{ '%.0f'|format(total_paid['total_paid'] or 0) }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold"><i class="fas fa-calendar-day me-2 text-green"></i>Next Visit</h6>
+                    <a href="{{ url_for('patient.view_appointments') }}" class="small text-decoration-none">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if next_visit %}
+                    <p class="mb-1"><strong>Date:</strong> {{ next_visit.appointment_date|dmy }}</p>
+                    <p class="mb-1"><strong>Time:</strong> {{ next_visit.appointment_time }}</p>
+                    <p class="mb-0"><strong>Status:</strong>
+                        {% if next_visit.status == 'Confirmed' %}
+                            <span class="badge" style="background: var(--blue-pale); color: var(--blue);">Confirmed</span>
+                        {% else %}
+                            <span class="badge" style="background: var(--amber-pale); color: var(--amber);">Pending</span>
+                        {% endif %}
+                    </p>
+                    {% else %}
+                    <p class="text-muted mb-0">No upcoming visit scheduled.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold"><i class="fas fa-file-invoice-dollar me-2 text-green"></i>Latest Bill</h6>
+                    <a href="{{ url_for('patient.view_bills') }}" class="small text-decoration-none">View Bills</a>
+                </div>
+                <div class="card-body">
+                    {% if latest_bill %}
+                    <p class="mb-1"><strong>Bill ID:</strong> #{{ latest_bill.bill_id }}</p>
+                    <p class="mb-1"><strong>Amount:</strong> ₹ {{ '%.2f'|format(latest_bill.total_amount or 0) }}</p>
+                    <p class="mb-1"><strong>Status:</strong>
+                        {% if latest_bill.paid %}
+                            <span class="badge" style="background: var(--green-pale); color: var(--green);">Paid</span>
+                        {% else %}
+                            <span class="badge" style="background: var(--amber-pale); color: var(--amber);">Unpaid</span>
+                        {% endif %}
+                    </p>
+                    <p class="mb-0"><strong>Payment Date:</strong> {{ latest_bill.payment_date|dmydt if latest_bill.payment_date else '-' }}</p>
+                    {% else %}
+                    <p class="text-muted mb-0">No billing record yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Navigation -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100 card-hover">
+                <div class="card-body p-4 text-center">
+                    <div class="stat-icon mx-auto mb-3" style="background: var(--blue-pale); color: var(--blue);">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h5 class="fw-bold">My Appointments</h5>
+                    <p class="text-muted small mb-4">View your upcoming and past consultations with doctors.</p>
+                    <a href="{{ url_for('patient.view_appointments') }}" class="btn btn-outline-primary btn-sm w-100">View List</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 card-hover">
+                <div class="card-body p-4 text-center">
+                    <div class="stat-icon mx-auto mb-3" style="background: var(--green-pale); color: var(--green);">
+                        <i class="fas fa-file-medical"></i>
+                    </div>
+                    <h5 class="fw-bold">Health Records</h5>
+                    <p class="text-muted small mb-4">Access your prescriptions, reports, and medical history.</p>
+                    <a href="{{ url_for('patient.health_insights') }}" class="btn btn-outline-primary btn-sm w-100">View Records</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 card-hover">
+                <div class="card-body p-4 text-center">
+                    <div class="stat-icon mx-auto mb-3" style="background: var(--amber-pale); color: var(--amber);">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <h5 class="fw-bold">My Bills</h5>
+                    <p class="text-muted small mb-4">Check your pending payments and download previous invoices.</p>
+                    <a href="{{ url_for('patient.view_bills') }}" class="btn btn-outline-primary btn-sm w-100">View Bills</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="alert alert-danger fade-in">
+        <i class="fas fa-exclamation-circle me-2"></i> Patient record not found. Please contact hospital support.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+setInterval(function () {
+    if (document.visibilityState !== 'visible') return;
+    if (document.querySelector('.modal.show')) return;
+    window.location.reload();
+}, 20000);
+</script>
+{% endblock %}

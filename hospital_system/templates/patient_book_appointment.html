@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+{% block title %}Book Appointment - Hospital Management System{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-calendar-alt"></i> Book an Appointment</h4>
+                </div>
+                <div class="card-body p-4">
+                    {% if error %}
+                    <div class="alert alert-danger">{{ error }}</div>
+                    {% endif %}
+                    {% if recommended_specialization %}
+                    <div class="alert alert-info">
+                        Recommended specialization based on your disease: <strong>{{ recommended_specialization }}</strong>
+                    </div>
+                    {% endif %}
+                    <form method="POST" action="{{ url_for('patient.book_appointment') }}" id="appointmentForm">
+                        <div class="form-group mb-4">
+                            <label for="doctor_id" class="form-label fw-bold"><i class="fas fa-stethoscope"></i> Select Doctor</label>
+                            <select class="form-control form-control-lg" id="doctor_id" name="doctor_id" required>
+                                <option value="">-- Choose a Doctor --</option>
+                                {% for doctor in doctors %}
+                                <option value="{{ doctor.doctor_id }}" {% if form_data.doctor_id == doctor.doctor_id|string %}selected{% endif %}>
+                                    {% if doctor.name.startswith('Dr.') %}{{ doctor.name }}{% else %}Dr. {{ doctor.name }}{% endif %} - {{ doctor.specialization }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="appointment_date" class="form-label fw-bold"><i class="fas fa-calendar"></i> Appointment Date</label>
+                            <input type="date" class="form-control form-control-lg" id="appointment_date" name="appointment_date" value="{{ form_data.appointment_date or '' }}" required>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="appointment_time" class="form-label fw-bold"><i class="fas fa-clock"></i> Appointment Time</label>
+                            <select class="form-control form-control-lg" id="appointment_time" name="appointment_time" required disabled>
+                                <option value="">-- Select Time --</option>
+                            </select>
+                            <small id="slotHint" class="text-muted d-block mt-2">
+                                Select doctor and date to load live available slots.
+                            </small>
+                        </div>
+
+                        <div class="form-group mb-4">
+                            <label for="reason" class="form-label fw-bold"><i class="fas fa-clipboard-list"></i> Reason for Visit</label>
+                            <textarea class="form-control form-control-lg" id="reason" name="reason" rows="4">{{ form_data.reason or '' }}</textarea>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg flex-grow-1"><i class="fas fa-check"></i> Book Appointment</button>
+                            <a href="{{ url_for('patient.patient_dashboard') }}" class="btn btn-secondary btn-lg"><i class="fas fa-arrow-left"></i> Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('appointment_date');
+    const doctorInput = document.getElementById('doctor_id');
+    const timeInput = document.getElementById('appointment_time');
+    const slotHint = document.getElementById('slotHint');
+    const selectedTimeFromServer = "{{ form_data.appointment_time or '' }}";
+
+    const today = new Date().toISOString().split('T')[0];
+    dateInput.setAttribute('min', today);
+
+    function formatTimeLabel(slotValue) {
+        const [hourStr, minute] = slotValue.split(':');
+        const hour = parseInt(hourStr, 10);
+        const suffix = hour < 12 ? 'AM' : 'PM';
+        const displayHour = hour % 12 || 12;
+        return `${displayHour}:${minute} ${suffix}`;
+    }
+
+    function resetTimeOptions() {
+        timeInput.innerHTML = '<option value="">-- Select Time --</option>';
+        timeInput.disabled = true;
+    }
+
+    function isTodaySelected(selectedDateValue) {
+        if (!selectedDateValue) return false;
+        const localToday = new Date();
+        const yyyy = localToday.getFullYear();
+        const mm = String(localToday.getMonth() + 1).padStart(2, '0');
+        const dd = String(localToday.getDate()).padStart(2, '0');
+        return selectedDateValue === `${yyyy}-${mm}-${dd}`;
+    }
+
+    function getCurrentLocalHHMM() {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        return `${hh}:${mm}`;
+    }
+
+    async function refreshSlotAvailability() {
+        const doctorId = doctorInput.value;
+        const selectedDate = dateInput.value;
+        if (!doctorId || !selectedDate) {
+            resetTimeOptions();
+            slotHint.textContent = 'Select doctor and date to load live available slots.';
+            return;
+        }
+
+        timeInput.disabled = true;
+        slotHint.textContent = 'Loading live availability...';
+        try {
+            const url = "{{ url_for('patient.doctor_available_slots') }}" + `?doctor_id=${encodeURIComponent(doctorId)}&appointment_date=${encodeURIComponent(selectedDate)}`;
+            const response = await fetch(url, { cache: 'no-store' });
+            const data = await response.json();
+            if (!data.success) {
+                slotHint.textContent = data.message || 'Unable to load slots.';
+                return;
+            }
+
+            const selectedBeforeRefresh = timeInput.value || selectedTimeFromServer;
+            const currentLocalHHMM = getCurrentLocalHHMM();
+            const selectedDateIsToday = isTodaySelected(selectedDate);
+
+            const futureSlots = data.slots.filter(slotObj => {
+                if (selectedDateIsToday && slotObj.value <= currentLocalHHMM) return false;
+                return true;
+            });
+
+            timeInput.innerHTML = '<option value="">-- Select Time --</option>';
+            futureSlots.forEach(slotObj => {
+                const opt = document.createElement('option');
+                opt.value = slotObj.value;
+                opt.textContent = slotObj.disabled ? `${slotObj.label} - Booked` : slotObj.label;
+                opt.disabled = !!slotObj.disabled;
+                timeInput.appendChild(opt);
+            });
+            timeInput.disabled = futureSlots.length === 0;
+
+            if (selectedBeforeRefresh) {
+                const hasSelected = futureSlots.some(s => s.value === selectedBeforeRefresh && !s.disabled);
+                if (hasSelected) {
+                    timeInput.value = selectedBeforeRefresh;
+                } else {
+                    timeInput.value = '';
+                }
+            }
+
+            const availableCount = futureSlots.filter(s => !s.disabled).length;
+            const bookedCount = futureSlots.filter(s => s.disabled).length;
+            slotHint.textContent = availableCount > 0
+                ? `${availableCount} live slot(s) available, ${bookedCount} already booked.`
+                : 'No available slots on this date. Please choose another date.';
+        } catch (err) {
+            timeInput.disabled = true;
+            slotHint.textContent = 'Unable to fetch availability right now. Please try again.';
+        }
+    }
+
+    doctorInput.addEventListener('change', refreshSlotAvailability);
+    dateInput.addEventListener('change', refreshSlotAvailability);
+
+    setInterval(() => {
+        if (doctorInput.value && dateInput.value) {
+            refreshSlotAvailability();
+        }
+    }, 5000);
+
+    refreshSlotAvailability();
+
+    document.getElementById('appointmentForm').addEventListener('submit', function(e) {
+        const selectedDate = new Date(dateInput.value);
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        if (selectedDate < now) {
+            e.preventDefault();
+            alert('Please select a future date');
+            return;
+        }
+
+        const nowHHMM = getCurrentLocalHHMM();
+        if (isTodaySelected(dateInput.value) && timeInput.value && timeInput.value <= nowHHMM) {
+            e.preventDefault();
+            alert('Selected time has already passed. Please choose a future slot.');
+            return;
+        }
+
+        const selectedOpt = timeInput.options[timeInput.selectedIndex];
+        if (timeInput.disabled || !timeInput.value || (selectedOpt && selectedOpt.disabled)) {
+            e.preventDefault();
+            alert('Selected time is not available. Please choose another slot.');
+        }
+    });
+});
+</script>
+
+<style>
+.form-control, .form-control-lg { border-radius: 8px; border: 2px solid #e0e0e0; transition: all 0.3s; }
+.form-control:focus, .form-control-lg:focus { border-color: #667eea; box-shadow: 0 0 0 0.2rem rgba(102,126,234,0.25); }
+</style>
+{% endblock %}

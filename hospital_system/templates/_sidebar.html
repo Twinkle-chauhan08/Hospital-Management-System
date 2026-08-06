@@ -1,0 +1,94 @@
+{# Shared sidebar content (desktop + mobile offcanvas) #}
+<a href="{{ url_for('main.home') }}" class="medicare-logo mb-4 px-2">
+    <img class="medicare-logo-img" src="{{ url_for('static', filename='img/medicare_mark.svg') }}" alt="Medicare">
+    <span>Medicare</span>
+</a>
+
+<nav class="flex-grow-1">
+    {% if session.get('role') == 'admin' %}
+        <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-item {% if request.endpoint == 'admin.admin_dashboard' %}active{% endif %}">
+            <i class="fas fa-chart-pie"></i><span>Overview</span>
+        </a>
+        <a href="{{ url_for('admin.admin_doctors') }}" class="nav-item {% if 'admin_doctors' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-user-md"></i><span>Doctors</span>
+        </a>
+        <a href="{{ url_for('admin.admin_view_patients' )}}" class="nav-item {% if 'admin_view_patients' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-users"></i><span>Patients</span>
+        </a>
+        <a href="{{ url_for('admin.admin_receptionists') }}" class="nav-item {% if 'admin_receptionists' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-clipboard-list"></i><span>Receptionists</span>
+        </a>
+        <a href="{{ url_for('admin.admin_appointments') }}" class="nav-item {% if 'admin_appointments' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-calendar-check"></i><span>Appointments</span>
+        </a>
+        <a href="{{ url_for('admin.admin_reports') }}" class="nav-item {% if 'admin_reports' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-file-download"></i><span>Reports</span>
+        </a>
+    {% elif session.get('role') == 'doctor' %}
+        <a href="{{ url_for('doctor.doctor_dashboard') }}" class="nav-item {% if request.endpoint == 'doctor.doctor_dashboard' %}active{% endif %}">
+            <i class="fas fa-chart-pie"></i><span>Overview</span>
+        </a>
+        <a href="{{ url_for('doctor.doctor_profile') }}" class="nav-item {% if 'doctor_profile' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-user-md"></i><span>My Profile</span>
+        </a>
+        <a href="{{ url_for('doctor.doctor_appointments') }}" class="nav-item {% if 'doctor_appointments' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-calendar-check"></i><span>My Appointments</span>
+        </a>
+        <a href="{{ url_for('doctor.doctor_patients') }}" class="nav-item {% if 'doctor_patients' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-users"></i><span>My Patients</span>
+        </a>
+        <a href="{{ url_for('doctor.doctor_prescriptions') }}" class="nav-item {% if 'doctor_prescriptions' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-file-prescription"></i><span>E-Prescriptions</span>
+        </a>
+    {% elif session.get('role') == 'receptionist' %}
+        <a href="{{ url_for('receptionist.receptionist_dashboard') }}" class="nav-item {% if request.endpoint == 'receptionist.receptionist_dashboard' %}active{% endif %}">
+            <i class="fas fa-chart-pie"></i><span>Overview</span>
+        </a>
+        <a href="{{ url_for('receptionist.receptionist_profile') }}" class="nav-item {% if 'receptionist_profile' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-user"></i><span>My Profile</span>
+        </a>
+        <a href="{{ url_for('receptionist.receptionist_appointments') }}" class="nav-item {% if 'receptionist_appointments' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-calendar-check"></i><span>Appointments</span>
+        </a>
+        <a href="{{ url_for('receptionist.receptionist_bills') }}" class="nav-item {% if 'receptionist_bills' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-file-invoice-dollar"></i><span>Bills</span>
+        </a>
+    {% elif session.get('role') == 'patient' %}
+        <a href="{{ url_for('patient.patient_dashboard') }}" class="nav-item {% if request.endpoint == 'patient.patient_dashboard' %}active{% endif %}">
+            <i class="fas fa-chart-pie"></i><span>My Overview</span>
+        </a>
+        <a href="{{ url_for('patient.patient_profile') }}" class="nav-item {% if 'patient_profile' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-user"></i><span>My Profile</span>
+        </a>
+        <a href="{{ url_for('patient.book_appointment') }}" class="nav-item {% if 'book_appointment' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-calendar-plus"></i><span>Book Appointment</span>
+        </a>
+        <a href="{{ url_for('patient.view_appointments') }}" class="nav-item {% if 'view_appointments' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-calendar-check"></i><span>My Appointments</span>
+        </a>
+        <a href="{{ url_for('patient.view_bills') }}" class="nav-item {% if 'view_bills' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-file-invoice-dollar"></i><span>My Bills</span>
+        </a>
+        <a href="{{ url_for('patient.health_insights') }}" class="nav-item {% if 'health_insights' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-heartbeat"></i><span>Health Records</span>
+        </a>
+        <a href="{{ url_for('patient.patient_prescriptions') }}" class="nav-item {% if 'patient_prescription' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-file-prescription"></i><span>E-Prescriptions</span>
+        </a>
+    {% endif %}
+</nav>
+
+<div class="mt-auto pt-4 border-top">
+    <div class="d-flex align-items-center gap-3 mb-3 px-2">
+        <div class="avatar-circle" style="width: 40px; height: 40px; background: var(--green); font-size: 16px;">
+            {{ session.get('username')[0]|upper if session.get('username') else 'U' }}
+        </div>
+        <div class="overflow-hidden">
+            <div class="fw-bold text-truncate" style="font-size: 14px;">{{ session.get('username') }}</div>
+            <div class="text-muted text-capitalize" style="font-size: 11px; letter-spacing: 0.05em;">{{ session.get('role') }}</div>
+        </div>
+    </div>
+    <a href="{{ url_for('auth.logout') }}" class="nav-item text-danger">
+        <i class="fas fa-sign-out-alt"></i><span>Sign Out</span>
+    </a>
+</div>

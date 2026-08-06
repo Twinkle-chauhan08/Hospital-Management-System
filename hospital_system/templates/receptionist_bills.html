@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Bills - Hospital Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="text-hospital"><i class="fas fa-receipt"></i> Patient Bills</h3>
+            <p class="text-muted">Manage and track patient bills</p>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-lg-6">
+            <form method="GET" action="{{ url_for('receptionist.view_bills') }}" class="d-flex gap-2">
+                <input type="text"
+                       name="q"
+                       class="form-control"
+                       placeholder="Search by patient name..."
+                       value="{{ search_query or '' }}">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i> Search
+                </button>
+                {% if search_query %}
+                <a href="{{ url_for('receptionist.view_bills') }}" class="btn btn-outline-secondary">Clear</a>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+
+    {% if bills %}
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>Bill ID</th>
+                    <th>Patient</th>
+                    <th>Appointment Date</th>
+                    <th>Consultation Fee</th>
+                    <th>Treatment Cost</th>
+                    <th>Medicines</th>
+                    <th>Total Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bill in bills %}
+                <tr>
+                    <td><strong>#{{ bill.bill_id }}</strong></td>
+                    <td>{{ bill.patient_name }}</td>
+                    <td>{{ bill.appointment_date|dmy }}</td>
+                    <td>Rs {{ "%.2f"|format(bill.consultation_fee or 0) }}</td>
+                    <td>Rs {{ "%.2f"|format(bill.treatment_cost or 0) }}</td>
+                    <td>Rs {{ "%.2f"|format(bill.medicines_cost or 0) }}</td>
+                    <td><strong>Rs {{ "%.2f"|format(bill.total_amount) }}</strong></td>
+                    <td>
+                        {% if bill.paid %}
+                            <span class="badge bg-success">Paid</span>
+                        {% else %}
+                            <span class="badge bg-warning">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if bill.paid %}
+                            <button class="btn btn-sm btn-outline-secondary" disabled title="Paid bills cannot be edited">
+                                Paid
+                            </button>
+                        {% else %}
+                            <a href="{{ url_for('receptionist.generate_bill', appointment_id=bill.appointment_id) }}" class="btn btn-sm btn-outline-primary">
+                                Edit
+                            </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        {% if search_query %}
+            No bills found for patient name "{{ search_query }}".
+        {% else %}
+            No bills found. Generate a bill from a completed appointment.
+        {% endif %}
+        <a href="{{ url_for('receptionist.view_appointments') }}" class="alert-link ms-1">Go to Appointments</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

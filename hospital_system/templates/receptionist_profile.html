@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Receptionist{% endblock %}
+{% block header_title %}Receptionist Profile{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-3">
+    <div class="card">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold"><i class="fas fa-user-nurse me-2 text-green"></i>Edit My Profile</h5>
+            <small class="text-muted">Keep your details updated</small>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('receptionist.receptionist_profile') }}" enctype="multipart/form-data">
+                <div class="row g-4">
+                    <div class="col-lg-3">
+                        <div class="border rounded p-3 h-100">
+                            <label class="form-label fw-semibold">Profile Photo</label>
+                            <div class="text-center mb-3">
+                                {% if receptionist.photo_path %}
+                                <img id="receptPhotoPreview" src="{{ url_for('static', filename=receptionist.photo_path) }}?v={{ receptionist.photo_path|replace('/','_') }}" alt="Receptionist Photo"
+                                     style="width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 3px solid #e5f9f1;">
+                                {% else %}
+                                <img id="receptPhotoPreview" src="" alt="Receptionist Photo" style="display:none; width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 3px solid #e5f9f1;">
+                                <div id="receptPhotoAvatar" class="avatar-circle mx-auto" style="width: 130px; height: 130px; font-size: 42px;">
+                                    {{ (receptionist.name or receptionist.username or 'R')[0]|upper }}
+                                </div>
+                                {% endif %}
+                            </div>
+                            <input id="receptPhotoInput" type="file" name="profile_photo" class="form-control" accept=".png,.jpg,.jpeg,.webp">
+                            <small class="text-muted d-block mt-2">Allowed: PNG, JPG, JPEG, WEBP</small>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-9">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Login Username</label>
+                                <input type="text" class="form-control" value="{{ receptionist.username }}" disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Full Name *</label>
+                                <input type="text" name="name" class="form-control" value="{{ receptionist.name or '' }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" value="{{ receptionist.email or '' }}" placeholder="name@example.com">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Phone</label>
+                                <input type="text" name="phone" class="form-control" value="{{ receptionist.phone or '' }}" placeholder="Phone number">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-green">
+                        <i class="fas fa-save me-1"></i> Save Profile
+                    </button>
+                    <a href="{{ url_for('receptionist.receptionist_dashboard') }}" class="btn btn-outline-secondary ms-2">Back to Dashboard</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('receptPhotoInput');
+    const preview = document.getElementById('receptPhotoPreview');
+    const avatar = document.getElementById('receptPhotoAvatar');
+    if (!input || !preview) return;
+
+    input.addEventListener('change', function () {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        const url = URL.createObjectURL(file);
+        preview.src = url;
+        preview.style.display = '';
+        if (avatar) avatar.style.display = 'none';
+    });
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Bill - Hospital Management System{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-invoice-dollar"></i> Generate Bill</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <p class="mb-1"><strong>Appointment:</strong> #{{ appointment.appointment_id }}</p>
+                        <p class="mb-1"><strong>Patient:</strong> {{ appointment.patient_name }}</p>
+                        <p class="mb-1"><strong>Doctor:</strong> Dr. {{ appointment.doctor_name }}</p>
+                        <p class="mb-1"><strong>Date:</strong> {{ appointment.appointment_date|dmy }}</p>
+                        <p class="mb-0"><strong>Time:</strong> {{ appointment.appointment_time }}</p>
+                    </div>
+
+                    {% set is_paid = existing_bill and existing_bill.paid %}
+                    {% set is_finalized = existing_bill and appointment.status == 'Completed' and not appointment.next_visit_date and existing_bill.paid %}
+
+                    {% if is_paid %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-check-circle me-2"></i> This bill has been paid and cannot be modified.
+                        </div>
+                    {% elif is_finalized %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-lock me-2"></i> Billing is finalized for this completed appointment.
+                        </div>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('receptionist.generate_bill', appointment_id=appointment.appointment_id) }}">
+                        <fieldset {% if is_paid or is_finalized %}disabled{% endif %}>
+                            <div class="mb-3">
+                                <label for="consultation_fee" class="form-label">Consultation Fee</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    class="form-control"
+                                    id="consultation_fee"
+                                    name="consultation_fee"
+                                    value="{{ existing_bill.consultation_fee if existing_bill else '500.00' }}"
+                                    required
+                                >
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="treatment_cost" class="form-label">Treatment Cost</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    class="form-control"
+                                    id="treatment_cost"
+                                    name="treatment_cost"
+                                    value="{{ existing_bill.treatment_cost if existing_bill else '0.00' }}"
+                                    required
+                                >
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="medicines_cost" class="form-label">Medicines Cost</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    class="form-control"
+                                    id="medicines_cost"
+                                    name="medicines_cost"
+                                    value="{{ existing_bill.medicines_cost if existing_bill else '0.00' }}"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-check mb-4">
+                                <input class="form-check-input" type="checkbox" id="paid" name="paid" {% if existing_bill and existing_bill.paid %}checked{% endif %}>
+                                <label class="form-check-label" for="paid">
+                                    Mark as paid
+                                </label>
+                            </div>
+                        </fieldset>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="text-muted mb-2">Total Preview</h6>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div><i class="fas fa-wallet text-success"></i></div>
+                                            <div>
+                                                <div class="h4 mb-0" id="totalPreview">₹ 0.00</div>
+                                                <small class="text-muted">Consultation + Treatment + Medicines</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end gap-2">
+                                {% if not (is_paid or is_finalized) %}
+                                <button type="submit" class="btn btn-success flex-fill">
+                                    <i class="fas fa-save"></i> {{ 'Update Bill' if existing_bill else 'Generate Bill' }}
+                                </button>
+                                {% endif %}
+                                <a href="{{ url_for('receptionist.view_appointments') }}" class="btn btn-secondary {% if is_paid or is_finalized %}w-100{% endif %}">Back</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function updateTotalPreview() {
+    const c = parseFloat(document.getElementById('consultation_fee').value || '0');
+    const t = parseFloat(document.getElementById('treatment_cost').value || '0');
+    const m = parseFloat(document.getElementById('medicines_cost').value || '0');
+    const total = (c + t + m).toFixed(2);
+    document.getElementById('totalPreview').textContent = '₹ ' + total;
+  }
+  ['consultation_fee','treatment_cost','medicines_cost'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', updateTotalPreview);
+    el.addEventListener('change', updateTotalPreview);
+  });
+  updateTotalPreview();
+</script>
+{% endblock %}

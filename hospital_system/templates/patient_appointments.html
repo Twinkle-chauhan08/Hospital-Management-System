@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block title %}My Appointments - Hospital Management System{% endblock %}
+
+{% block header_title %}My Appointments{% endblock %}
+
+{% block extra_css %}
+<style>
+.modal {
+    z-index: 1080 !important;
+}
+.modal-backdrop {
+    z-index: 1070 !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="row g-4 mb-4">
+        <div class="col-md-12 text-end">
+            <a href="{{ url_for('patient.book_appointment') }}" class="btn btn-primary shadow-sm">
+                <i class="fas fa-calendar-plus me-2"></i> Book New Appointment
+            </a>
+        </div>
+    </div>
+
+    {% if due_today_reminders %}
+    <div class="alert alert-warning border-0 shadow-sm mb-3">
+        <div class="fw-bold mb-1"><i class="fas fa-bell me-2"></i>Today's Visit Reminder</div>
+        {% for reminder in due_today_reminders %}
+            <div class="small">
+                Please visit Dr. {{ reminder.doctor_name }} at {{ reminder.appointment_time }}.
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if appointments %}
+    <div class="row g-3" style="max-height: calc(100vh - 230px); overflow-y: auto; padding-right: 4px;">
+        {% for appointment in appointments %}
+        <div class="col-12">
+            <div class="card card-hover p-3" data-bs-toggle="modal" data-bs-target="#appointmentDetailModal{{ appointment.appointment_id }}" style="cursor:pointer;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1 fw-bold">Dr. {{ appointment.doctor_name }}</h6>
+                        <small class="text-muted">{{ appointment.doctor_specialization }} | {{ appointment.appointment_date|dmy }} {{ appointment.appointment_time }}</small>
+                    </div>
+                    <div class="text-end">
+                        {% if appointment.status == 'Pending' %}
+                            <span class="badge" style="background: var(--amber-pale); color: var(--amber);">{{ appointment.status }}</span>
+                        {% elif appointment.status == 'Confirmed' %}
+                            <span class="badge" style="background: var(--blue-pale); color: var(--blue);">{{ appointment.status }}</span>
+                        {% elif appointment.status == 'Completed' %}
+                            <span class="badge" style="background: var(--green-pale); color: var(--green);">{{ appointment.status }}</span>
+                        {% else %}
+                            <span class="badge bg-light text-muted">{{ appointment.status }}</span>
+                        {% endif %}
+                        <div><small class="text-muted">Tap to open details</small></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% for appointment in appointments %}
+    <div class="modal fade" id="appointmentDetailModal{{ appointment.appointment_id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Appointment Details - Dr. {{ appointment.doctor_name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-4"><strong>Date:</strong> {{ appointment.appointment_date|dmy }}</div>
+                        <div class="col-md-4"><strong>Time:</strong> {{ appointment.appointment_time }}</div>
+                        <div class="col-md-4"><strong>Status:</strong> {{ appointment.status }}</div>
+                    </div>
+
+                    {% if appointment.reason_for_visit %}
+                    <div class="mb-3">
+                        <label class="label">Reason for Visit</label>
+                        <p class="small text-muted mb-0">{{ appointment.reason_for_visit }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if appointment.next_visit_date %}
+                    <div class="mb-3 p-2 rounded bg-amber-pale text-amber border border-amber small">
+                        <i class="fas fa-calendar-day me-2"></i><strong>Next Visit Date:</strong> {{ appointment.next_visit_date|dmy }}
+                    </div>
+                    {% endif %}
+
+                    {% if appointment.bill_id %}
+                    <div class="mb-3 p-2 rounded border small" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                        <div class="fw-bold mb-1"><i class="fas fa-file-invoice-dollar me-2 text-green"></i>Billing Updated</div>
+                        <div>Bill ID: <strong>#{{ appointment.bill_id }}</strong></div>
+                        <div>Total Amount: <strong>Rs {{ '%.2f'|format(appointment.bill_total_amount or 0) }}</strong></div>
+                        <div>
+                            Status:
+                            {% if appointment.bill_paid %}
+                                <span class="badge" style="background: var(--green-pale); color: var(--green);">Paid</span>
+                            {% else %}
+                                <span class="badge" style="background: var(--amber-pale); color: var(--amber);">Unpaid</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if appointment.visits %}
+                    <div class="mt-3">
+                        <label class="label text-blue">Progress Notes / Visits</label>
+                        <div class="list-group list-group-flush">
+                            {% for visit in appointment.visits %}
+                            <div class="list-group-item px-0 py-2 border-0">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <small class="fw-bold text-muted"><i class="far fa-calendar-check me-1"></i> {{ visit.visit_date|dmydt }}</small>
+                                </div>
+                                <p class="small mb-0 text-dark p-2 rounded bg-light border-start border-3 border-blue">{{ visit.progress_notes }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if appointment.status == 'Completed' %}
+                    <hr class="my-3 opacity-10">
+                    <div class="row g-2 mb-3">
+                        {% if appointment.bp %}
+                        <div class="col-6">
+                            <label class="label text-green small mb-1">BP</label>
+                            <div class="p-2 rounded bg-light small fw-bold">{{ appointment.bp }}</div>
+                        </div>
+                        {% endif %}
+                        {% if appointment.weight %}
+                        <div class="col-6">
+                            <label class="label text-green small mb-1">Weight</label>
+                            <div class="p-2 rounded bg-light small fw-bold">{{ appointment.weight }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if appointment.treatment %}
+                    <div class="mb-3">
+                        <label class="label text-green">Diagnosis / Treatment</label>
+                        <div class="p-2 rounded bg-light small">{{ appointment.treatment }}</div>
+                    </div>
+                    {% endif %}
+                    {% if appointment.prescription %}
+                    <div class="mb-3">
+                        <label class="label text-green">Prescription / Medicines</label>
+                        <div class="p-3 rounded border-start border-4 border-green bg-green-pale small">
+                            <i class="fas fa-pills me-2"></i><strong>Rx:</strong> {{ appointment.prescription }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    {% if appointment.status == 'Pending' %}
+                    <form method="POST" action="{{ url_for('patient.cancel_appointment', appointment_id=appointment.appointment_id) }}">
+                        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                            <i class="fas fa-times me-2"></i> Cancel Appointment
+                        </button>
+                    </form>
+                    {% endif %}
+                    {% if appointment.status == 'Completed' %}
+                    <a href="{{ url_for('patient.patient_prescription_view', appointment_id=appointment.appointment_id) }}" class="btn btn-green">
+                        <i class="fas fa-file-prescription me-1"></i> View E-Prescription
+                    </a>
+                    {% endif %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="alert alert-info fade-in text-center p-5">
+        <i class="fas fa-calendar-day fa-3x mb-3 text-green-mid"></i>
+        <h4>No appointments yet</h4>
+        <p class="text-muted">You haven't booked any medical appointments yet. Start managing your health now!</p>
+        <a href="{{ url_for('patient.book_appointment') }}" class="btn btn-green mt-2">Book Your First Appointment</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[id^="appointmentDetailModal"]').forEach(function (modalEl) {
+        if (modalEl.parentElement !== document.body) {
+            document.body.appendChild(modalEl);
+        }
+    });
+});
+
+setInterval(function () {
+    if (document.visibilityState !== 'visible') return;
+    if (document.querySelector('.modal.show')) return;
+    window.location.reload();
+}, 20000);
+</script>
+{% endblock %}

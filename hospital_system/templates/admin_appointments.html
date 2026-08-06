@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Appointments - Hospital Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="text-hospital"><i class="fas fa-calendar"></i> All Appointments</h3>
+            <p class="text-muted">Hospital-wide appointment records</p>
+        </div>
+    </div>
+
+    {% if appointments %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Appointment ID</th>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th>Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for appointment in appointments %}
+                <tr>
+                    <td><strong>#{{ appointment.appointment_id }}</strong></td>
+                    <td>{{ appointment.patient_name }}</td>
+                    <td>Dr. {{ appointment.doctor_name }}</td>
+                    <td>{{ appointment.appointment_date|dmy }}</td>
+                    <td>{{ appointment.appointment_time }}</td>
+                    <td>
+                        {% if appointment.status == 'Pending' %}
+                            <span class="badge bg-warning">{{ appointment.status }}</span>
+                        {% elif appointment.status == 'Confirmed' %}
+                            <span class="badge bg-success">{{ appointment.status }}</span>
+                        {% elif appointment.status == 'Completed' %}
+                            <span class="badge bg-primary">{{ appointment.status }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ appointment.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if appointment.bill_paid is none %}
+                            <span class="badge bg-secondary">No Bill</span>
+                        {% elif appointment.bill_paid %}
+                            <span class="badge bg-success">Paid</span>
+                        {% else %}
+                            <span class="badge bg-warning">Unpaid</span>
+                        {% endif %}
+                    </td>
+                    <td><small>{{ appointment.reason_for_visit[:30] or 'N/A' }}</small></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> No appointments found.
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .text-hospital {
+        color: #667eea;
+    }
+</style>
+{% endblock %}

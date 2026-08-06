@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="160" viewBox="0 0 520 160" role="img" aria-label="Medicare logo">
+  <defs>
+    <linearGradient id="gGreen" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#22C55E"/>
+      <stop offset="1" stop-color="#16A34A"/>
+    </linearGradient>
+    <linearGradient id="gBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2DD4BF"/>
+      <stop offset="1" stop-color="#0EA5E9"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(20,16)">
+    <rect x="0" y="0" width="128" height="128" rx="26" fill="#FFFFFF"/>
+    <rect x="18" y="56" width="92" height="30" rx="8" fill="url(#gGreen)"/>
+    <rect x="49" y="24" width="30" height="92" rx="8" fill="url(#gGreen)"/>
+    <rect x="55.5" y="28" width="17" height="88" rx="8.5" fill="url(#gBlue)" opacity="0.95"/>
+    <path d="M34 52 C28 60, 28 72, 36 80 C46 90, 64 94, 82 89 C100 84, 112 72, 106 58" fill="none" stroke="url(#gBlue)" stroke-width="7" stroke-linecap="round"/>
+    <path d="M94 34 C88 30, 76 30, 70 34" fill="none" stroke="#8BE7D2" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
+    <path d="M96 32 C110 46, 110 64, 96 78" fill="none" stroke="#7ADCC8" stroke-width="5" stroke-linecap="round" opacity="0.85"/>
+    <circle cx="34" cy="82" r="8" fill="none" stroke="url(#gBlue)" stroke-width="6.5"/>
+    <circle cx="34" cy="82" r="2.4" fill="#0EA5E9" opacity="0.9"/>
+  </g>
+
+  <g transform="translate(176,52)">
+    <text x="0" y="30" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="44" font-weight="800" letter-spacing="2.5" fill="#3B3B3B">MEDICARE</text>
+    <text x="2" y="66" font-family="Plus Jakarta Sans, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="6" fill="#0EA5E9" opacity="0.95">SLOGAN HERE</text>
+  </g>
+</svg>

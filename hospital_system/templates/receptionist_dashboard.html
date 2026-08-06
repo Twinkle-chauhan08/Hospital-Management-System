@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Receptionist Dashboard - Hospital Management System{% endblock %}
+
+{% block header_title %}Receptionist Dashboard{% endblock %}
+
+{% block content %}
+<div class="fade-up">
+    <!-- Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card stat-card">
+                <div class="stat-icon" style="background: var(--blue-pale); color: var(--blue);">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="label" style="font-size: 11px;">Today's Appointments</div>
+                    <h2 class="h4 mb-0">{{ today_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card stat-card">
+                <div class="stat-icon" style="background: var(--amber-pale); color: var(--amber);">
+                    <i class="fas fa-hourglass-half"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="label" style="font-size: 11px;">Pending Confirmation</div>
+                    <h2 class="h4 mb-0">{{ pending_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="fw-bold mb-1">Patient Registration</h4>
+                        <p class="text-muted small mb-0">Add new patients to the system and set up their medical profiles.</p>
+                    </div>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus me-2"></i> Register New Patient
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Schedule -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-calendar-day me-2 text-green"></i> Today's Schedule</h5>
+                    <span class="badge bg-green-pale text-green">{{ today_appointments|length }} visits</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Status</th>
+                                    <th>Reason</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in today_appointments %}
+                                <tr>
+                                    <td class="fw-bold text-green">{{ a.appointment_time }}</td>
+                                    <td>{{ a.patient_name }}</td>
+                                    <td>Dr. {{ a.doctor_name }}</td>
+                                    <td>
+                                        <span class="badge" style="background: var(--green-pale); color: var(--green);">{{ a.status|capitalize }}</span>
+                                    </td>
+                                    <td>{{ a.reason_for_visit }}</td>
+                                </tr>
+                                {% endfor %}
+                                {% if not today_appointments %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No appointments scheduled for today.</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Confirmation -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card border-amber">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold text-amber"><i class="fas fa-clock me-2"></i> Pending Confirmations</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date & Time</th>
+                                    <th>Patient</th>
+                                    <th>Doctor</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in pending_appointments %}
+                                <tr>
+                                    <td>{{ a.appointment_date|dmy }} <br> <small class="text-muted">{{ a.appointment_time }}</small></td>
+                                    <td>{{ a.patient_name }}</td>
+                                    <td>Dr. {{ a.doctor_name }}</td>
+                                    <td>
+                                        <form method="post" action="{{ url_for('receptionist.confirm_appointment', appointment_id=a.appointment_id) }}" class="d-inline">
+                                            <button class="btn btn-sm btn-green"><i class="fas fa-check me-1"></i> Confirm</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not pending_appointments %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">No pending appointments to confirm.</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

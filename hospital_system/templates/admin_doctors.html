@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Doctors - Hospital Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="text-hospital"><i class="fas fa-user-md"></i> Hospital Doctors</h3>
+            <p class="text-muted">Add and manage doctors</p>
+        </div>
+    </div>
+
+    <div class="card mb-4" id="add-doctor">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-user-plus"></i> Add New Doctor</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.admin_doctors') }}" autocomplete="off">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Login Username *</label>
+                        <input type="text" name="username" class="form-control" placeholder="Add Doctor Username" required autocomplete="off"
+                               pattern="[A-Za-z]+_?[A-Za-z]*"
+                               title="Username must contain only alphabetic characters and at most one underscore.">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Login Password *</label>
+                        <input type="password" name="password" class="form-control" 
+                               placeholder="Add Password"
+                               pattern="^(?=.*[0-9])(?=.*[!@#$%^&amp;*(),.?&quot;:{}|&lt;&gt;]).{8,}$"
+                               title="Password must be at least 8 characters long, contain at least one numeric character and one special character."
+                               required autocomplete="new-password">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Doctor Name *</label>
+                        <input type="text" name="name" class="form-control" placeholder="Add Doctor Name" required
+                               pattern="[A-Za-z ]+"
+                               title="Name must contain only letters and spaces.">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Specialization *</label>
+                        <input type="text" name="specialization" class="form-control" placeholder="e.g. Cardiologist" required
+                               pattern="[A-Za-z ]+"
+                               title="Specialization must contain only letters and spaces.">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Qualification *</label>
+                        <input type="text" name="qualification" class="form-control" placeholder="e.g. MBBS, MD" required
+                               pattern="[A-Za-z ,]+"
+                               title="Qualification must contain only letters, spaces, and commas.">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Department *</label>
+                        <input type="text" name="department" class="form-control" placeholder="e.g. Cardiac Surgery" required
+                               pattern="[A-Za-z ]+"
+                               title="Department must contain only letters and spaces.">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Experience (Years) *</label>
+                        <input type="number" min="0" name="experience_years" class="form-control" placeholder="e.g. 5" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Email *</label>
+                        <input type="email" name="email" class="form-control" placeholder="Add Email" required
+                               pattern="^[A-Za-z0-9._%+-]+@medicare\.com$"
+                               title="Email must be a valid address ending with @medicare.com">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Phone *</label>
+                        <input type="tel" name="phone" class="form-control" placeholder="Add Phone" required
+                               pattern="[0-9]{10}"
+                               title="Phone number must be exactly 10 digits.">
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" id="available" name="available" checked>
+                            <label class="form-check-label" for="available">
+                                Available for Appointments
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Doctor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if doctors %}
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Doctor ID</th>
+                    <th>Name</th>
+                    <th>Qualification</th>
+                    <th>Specialization</th>
+                    <th>Department</th>
+                    <th>Experience</th>
+                    <th>Patients</th>
+                    <th>Contact</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doctor in doctors %}
+                <tr>
+                    <td><strong>#{{ doctor.doctor_id }}</strong></td>
+                    <td>Dr. {{ doctor.name }}</td>
+                    <td>{{ doctor.qualification or 'N/A' }}</td>
+                    <td>{{ doctor.specialization }}</td>
+                    <td>{{ doctor.department }}</td>
+                    <td>{{ doctor.experience_years or 0 }} years</td>
+                    <td><span class="badge bg-info">{{ doctor.patient_count }}</span></td>
+                    <td>
+                        <small>
+                            {{ doctor.email or 'N/A' }}<br>
+                            {{ doctor.phone or 'N/A' }}
+                        </small>
+                    </td>
+                    <td>
+                        {% if doctor.available %}
+                            <span class="badge bg-success">Available</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Unavailable</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin.delete_doctor', doctor_id=doctor.doctor_id) }}" onsubmit="return confirm('Are you sure you want to delete Dr. {{ doctor.name }}? This will also remove their login access.')">
+                            <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> No doctors found.
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .text-hospital {
+        color: #667eea;
+    }
+</style>
+{% endblock %}

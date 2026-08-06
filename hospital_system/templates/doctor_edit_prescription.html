@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Edit E-Prescription{% endblock %}
+{% block header_title %}Edit E-Prescription{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">
+            <i class="fas fa-file-prescription me-2 text-green"></i>
+            Appointment #{{ appt.appointment_id }} - {{ appt.patient_name }}
+        </h5>
+        <a href="{{ url_for('doctor.doctor_prescriptions') }}" class="btn btn-sm btn-ghost">Back</a>
+    </div>
+    <div class="card-body">
+        <div class="mb-3 text-muted small">
+            Date: {{ appt.appointment_date|dmy }} {{ appt.appointment_time }}
+        </div>
+        <form method="POST">
+            <div class="mb-3">
+                <label class="label">Prescription / Medicines</label>
+                <textarea name="prescription" class="input" rows="3" required>{{ appt.prescription or '' }}</textarea>
+            </div>
+            <div class="mb-3">
+                <label class="label">Treatment / Diagnosis</label>
+                <textarea name="treatment" class="input" rows="3">{{ appt.treatment or '' }}</textarea>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="label">BP</label>
+                    <input type="text" name="bp" class="input" value="{{ appt.bp or '' }}" placeholder="120/80">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="label">Weight</label>
+                    <input type="text" name="weight" class="input" value="{{ appt.weight or '' }}" placeholder="70">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="label">Next Visit Date</label>
+                    <input type="date" name="next_visit_date" class="input" value="{{ appt.next_visit_date }}">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-green">
+                <i class="fas fa-save me-1"></i> Save E-Prescription
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

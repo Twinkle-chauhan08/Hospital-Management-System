@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}My Bills{% endblock %}
+{% block header_title %}My Billing Details{% endblock %}
+
+{% block content %}
+<div class="fade-up">
+    <!-- Monthly Total Summary -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-1 fw-bold"><i class="fas fa-calendar-alt me-2 text-green"></i>Monthly Bill Summary</h5>
+                            <p class="text-muted small mb-0">{{ selected_month_label }}</p>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <div class="h3 text-green fw-bold mb-0">₹{{ '%.2f'|format(monthly_total['monthly_total'] or 0) }}</div>
+                            <small class="text-muted">Total Amount</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <label for="monthFilter" class="form-label fw-bold"><i class="fas fa-filter me-2"></i>Filter by Month</label>
+                    <form method="GET" action="{{ url_for('patient.view_bills') }}" class="d-flex gap-2">
+                        <select name="month" id="monthFilter" class="form-select" onchange="this.form.submit()">
+                            <option value="">Current Month</option>
+                            {% for code, label in month_options %}
+                                <option value="{{ code }}" {% if selected_month == code %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if selected_month %}
+                        <a href="{{ url_for('patient.view_bills') }}" class="btn btn-outline-secondary">Clear</a>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-file-invoice-dollar me-2 text-green"></i> Billing History</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if bills and bills|length > 0 %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Bill ID</th>
+                                    <th>Date & Time</th>
+                                    <th>Consultation</th>
+                                    <th>Treatment</th>
+                                    <th>Medicines</th>
+                                    <th>Total Amount</th>
+                                    <th>Status</th>
+                                    <th>Payment Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for b in bills %}
+                                <tr>
+                                    <td class="fw-bold">#{{ b.bill_id }}</td>
+                                    <td>{{ b.appointment_date|dmy }} <br> <small class="text-muted">{{ b.appointment_time }}</small></td>
+                                    <td>₹ {{ '%.2f'|format(b.consultation_fee) }}</td>
+                                    <td>₹ {{ '%.2f'|format(b.treatment_cost) }}</td>
+                                    <td>₹ {{ '%.2f'|format(b.medicines_cost) }}</td>
+                                    <td class="fw-bold text-green">₹ {{ '%.2f'|format(b.total_amount) }}</td>
+                                    <td>
+                                        {% if b.paid %}
+                                            <span class="badge" style="background: var(--green-pale); color: var(--green);">Paid</span>
+                                        {% else %}
+                                            <span class="badge" style="background: var(--amber-pale); color: var(--amber);">Unpaid</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ b.payment_date|dmydt if b.payment_date else '-' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="p-5 text-center text-muted">
+                        <i class="fas fa-file-invoice fa-3x mb-3" style="opacity: 0.2;"></i>
+                        <p>No billing records found in your history.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

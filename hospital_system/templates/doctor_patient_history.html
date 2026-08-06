@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Patient History - Medicare{% endblock %}
+
+{% block header_title %}Patient Medical History{% endblock %}
+
+{% block content %}
+<div class="fade-up">
+    <!-- Patient Profile Header -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card p-4" style="background: linear-gradient(135deg, var(--blue-pale), #fff);">
+                <div class="d-flex align-items-center gap-4">
+                    <div class="avatar-circle" style="width: 70px; height: 70px; background: var(--blue); font-size: 28px;">
+                        {{ patient.name[0]|upper }}
+                    </div>
+                    <div>
+                        <h2 class="mb-1 fw-bold">{{ patient.name }}</h2>
+                        <p class="text-muted mb-0">ID: #{{ patient.patient_id }} · {{ patient.age }} years · {{ patient.gender }} · Blood: {{ patient.blood_group or 'N/A' }}</p>
+                        <p class="text-muted small mb-0"><i class="fas fa-map-marker-alt me-1 text-green"></i> {{ patient.address or 'No address provided' }}</p>
+                    </div>
+                    <div class="ms-auto">
+                        <span class="badge" style="background: var(--blue-pale); color: var(--blue); font-size: 14px; padding: 8px 16px;">
+                            {{ patient.status or 'Admitted' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+        <!-- Diagnosis Info -->
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-stethoscope me-2 text-green"></i> Medical Background & Condition</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <label class="label">Current Condition Detail</label>
+                        <div class="p-3 rounded mb-3" style="background: var(--off-white); border: 1.5px solid var(--green-mid);">
+                            <p class="mb-0">{{ patient.current_condition or 'No condition detail added yet.' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="label">Initial Disease / Diagnosis</label>
+                        <div class="p-2 rounded bg-light fw-bold text-green-dark">
+                            {{ patient.disease or 'No specific disease reported' }}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="label">Overall Medical History</label>
+                        <p class="text-muted small">{{ patient.medical_history or 'No additional medical history recorded.' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Risk Level -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-heartbeat me-2 text-green"></i> Health Risk</h5>
+                </div>
+                <div class="card-body text-center d-flex flex-column justify-content-center">
+                    <div class="mb-3">
+                        {% if patient.health_risk_level == 'High' %}
+                            <i class="fas fa-exclamation-triangle fa-4x text-danger mb-3"></i>
+                            <h3 class="text-danger fw-bold">HIGH RISK</h3>
+                        {% elif patient.health_risk_level == 'Medium' %}
+                            <i class="fas fa-exclamation-circle fa-4x text-warning mb-3"></i>
+                            <h3 class="text-warning fw-bold">MEDIUM RISK</h3>
+                        {% else %}
+                            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                            <h3 class="text-success fw-bold">LOW RISK</h3>
+                        {% endif %}
+                    </div>
+                    <p class="text-muted small">Based on last assessment</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Appointment History -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-history me-2 text-green"></i> Appointment History</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Visit #</th>
+                                    <th>Date & Time</th>
+                                    <th>Doctor</th>
+                                    <th>Reason & Treatment</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for a in appointments %}
+                                <tr>
+                                    <td>
+                                        {% if a.visit_no %}
+                                            <span class="badge bg-green text-white">Visit {{ a.visit_no }}</span>
+                                        {% else %}
+                                            <span class="text-muted small">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ a.appointment_date|dmy }} <br> <small class="text-muted">{{ a.appointment_time }}</small></td>
+                                    <td>Dr. {{ a.doctor_name }}</td>
+                                    <td>
+                                        <div class="fw-bold small">{{ a.reason_for_visit }}</div>
+                                        {% if a.treatment %}
+                                            <div class="mt-1 small text-green"><i class="fas fa-hand-holding-medical me-1"></i> {{ a.treatment }}</div>
+                                        {% endif %}
+                                        {% if a.prescription %}
+                                            <div class="mt-1 small text-muted"><i class="fas fa-pills me-1 text-green"></i> Rx: {{ a.prescription }}</div>
+                                        {% endif %}
+                                        {% if a.bp or a.weight %}
+                                            <div class="mt-1 small text-muted">
+                                                {% if a.bp %}<span>BP: {{ a.bp }}</span>{% endif %}
+                                                {% if a.weight %}<span class="ms-2">Wt: {{ a.weight }}</span>{% endif %}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if a.status == 'Completed' %}
+                                            <span class="badge" style="background: var(--green-pale); color: var(--green);">Completed</span>
+                                        {% elif a.status == 'Pending' %}
+                                            <span class="badge" style="background: var(--amber-pale); color: var(--amber);">Pending</span>
+                                        {% else %}
+                                            <span class="badge" style="background: var(--blue-pale); color: var(--blue);">{{ a.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mb-4">
+        <a href="{{ url_for('doctor.doctor_patients') }}" class="btn btn-ghost">
+            <i class="fas fa-arrow-left me-2"></i> Back to Patient List
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+<style>
+.rounded-4 { border-radius: 12px !important; }
+.text-green-dark { color: #1a4d3a; }
+.italic { font-style: italic; }
+</style>
+{% endblock %}

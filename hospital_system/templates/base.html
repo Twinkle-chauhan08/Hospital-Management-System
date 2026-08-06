@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Medicare Hospital Management System{% endblock %}</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,600;1,500&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+    
+    <style>
+        /* Sidebar Layout Adjustments */
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        .sidebar {
+            width: 260px;
+            background: #fff;
+            border-right: 1.5px solid #D1FAE5;
+            display: flex;
+            flex-direction: column;
+            padding: 24px 16px;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: var(--off-white);
+        }
+        .header {
+            background: #fff;
+            border-bottom: 1.5px solid #D1FAE5;
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .content-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+        
+        /* Dashboard specific overrides */
+        .list-group-item {
+            border: none;
+            padding: 0;
+            background: transparent;
+        }
+        .list-group-item.active {
+            background: transparent;
+            color: inherit;
+        }
+
+        /* Mobile sidebar (Bootstrap offcanvas) */
+        .sidebar-offcanvas {
+            width: 280px;
+            max-width: 85vw;
+        }
+        .sidebar.sidebar--offcanvas {
+            position: static;
+            height: auto;
+            border-right: 0;
+            width: 280px;
+            max-width: 85vw;
+        }
+
+        @media (max-width: 767.98px) {
+            .header { padding: 14px 16px; }
+            .content-body { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        {% if session.get('user_id') and request.endpoint != 'main.home' %}
+        <aside class="sidebar d-none d-md-flex" id="sidebarDesktop">
+            <a href="{{ url_for('main.home') }}" class="medicare-logo mb-4 px-2">
+                <img class="medicare-logo-img" src="{{ url_for('static', filename='img/medicare_mark.svg') }}" alt="Medicare">
+                <span>Medicare</span>
+            </a>
+            
+            <nav class="flex-grow-1">
+                {% if session.get('role') == 'admin' %}
+                    <a href="{{ url_for('admin.admin_dashboard') }}" class="nav-item {% if request.endpoint == 'admin.admin_dashboard' %}active{% endif %}">
+                        <i class="fas fa-chart-pie"></i><span>Overview</span>
+                    </a>
+                    <a href="{{ url_for('admin.admin_profile') }}" class="nav-item {% if request.endpoint == 'admin.admin_profile' %}active{% endif %}">
+                        <i class="fas fa-user-shield"></i><span>My Profile</span>
+                    </a>
+                    <a href="{{ url_for('admin.admin_doctors') }}" class="nav-item {% if 'admin_doctors' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-user-md"></i><span>Doctors</span>
+                    </a>
+                    <a href="{{ url_for('admin.admin_view_patients' )}}" class="nav-item {% if 'admin_view_patients' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-users"></i><span>Patients</span>
+                    </a>
+                    <a href="{{ url_for('admin.admin_receptionists') }}" class="nav-item {% if 'admin_receptionists' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-clipboard-list"></i><span>Receptionists</span>
+                    </a>
+                    <a href="{{ url_for('admin.admin_appointments') }}" class="nav-item {% if 'admin_appointments' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-calendar-check"></i><span>Appointments</span>
+                    </a>
+                    <a href="{{ url_for('admin.admin_feedback') }}" class="nav-item {% if request.endpoint == 'admin.admin_feedback' %}active{% endif %}">
+                        <i class="fas fa-comments"></i><span>Feedback</span>
+                    </a>
+                    <a href="{{ url_for('admin.admin_reports') }}" class="nav-item {% if 'admin_reports' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-chart-line"></i><span>Reports</span>
+                    </a>
+                {% elif session.get('role') == 'doctor' %}
+                    <a href="{{ url_for('doctor.doctor_dashboard') }}" class="nav-item {% if request.endpoint == 'doctor.doctor_dashboard' %}active{% endif %}">
+                        <i class="fas fa-chart-pie"></i><span>Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('doctor.doctor_profile') }}" class="nav-item {% if request.endpoint == 'doctor.doctor_profile' %}active{% endif %}">
+                        <i class="fas fa-user-circle"></i><span>My Profile</span>
+                    </a>
+                    <a href="{{ url_for('doctor.doctor_appointments') }}" class="nav-item {% if 'doctor_appointments' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-calendar-alt"></i><span>Appointments</span>
+                    </a>
+                    <a href="{{ url_for('doctor.doctor_patients') }}" class="nav-item {% if 'doctor_patients' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-user-friends"></i><span>My Patients</span>
+                    </a>
+                    <a href="{{ url_for('doctor.doctor_prescriptions') }}" class="nav-item {% if 'prescription' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-prescription"></i><span>E-Prescriptions</span>
+                    </a>
+                {% elif session.get('role') == 'receptionist' %}
+                    <a href="{{ url_for('receptionist.receptionist_dashboard') }}" class="nav-item {% if request.endpoint == 'receptionist.receptionist_dashboard' %}active{% endif %}">
+                        <i class="fas fa-chart-pie"></i><span>Dashboard</span>
+                    </a>
+                    <a href="{{ url_for('receptionist.receptionist_profile') }}" class="nav-item {% if request.endpoint == 'receptionist.receptionist_profile' %}active{% endif %}">
+                        <i class="fas fa-user-circle"></i><span>My Profile</span>
+                    </a>
+                    <a href="{{ url_for('receptionist.view_appointments') }}" class="nav-item {% if 'view_appointments' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-calendar-check"></i><span>Appointments</span>
+                    </a>
+                    <a href="{{ url_for('receptionist.view_bills') }}" class="nav-item {% if 'view_bills' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-file-invoice-dollar"></i><span>Billing</span>
+                    </a>
+                {% elif session.get('role') == 'patient' %}
+                    <a href="{{ url_for('patient.patient_dashboard') }}" class="nav-item {% if request.endpoint == 'patient.patient_dashboard' %}active{% endif %}">
+                        <i class="fas fa-home"></i><span>My Overview</span>
+                    </a>
+                    <a href="{{ url_for('patient.patient_profile') }}" class="nav-item {% if 'patient_profile' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-user-circle"></i><span>My Profile</span>
+                    </a>
+                    <a href="{{ url_for('patient.book_appointment') }}" class="nav-item {% if 'book_appointment' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-calendar-plus"></i><span>Book Appointment</span>
+                    </a>
+                    <a href="{{ url_for('patient.view_appointments') }}" class="nav-item {% if 'view_appointments' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-calendar-check"></i><span>My Appointments</span>
+                    </a>
+                    <a href="{{ url_for('patient.view_bills') }}" class="nav-item {% if 'view_bills' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-file-invoice-dollar"></i><span>My Bills</span>
+                    </a>
+                    <a href="{{ url_for('patient.health_insights') }}" class="nav-item {% if 'health_insights' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-heartbeat"></i><span>Health Records</span>
+                    </a>
+                    <a href="{{ url_for('patient.patient_prescriptions') }}" class="nav-item {% if 'patient_prescription' in request.endpoint %}active{% endif %}">
+                        <i class="fas fa-file-prescription"></i><span>E-Prescriptions</span>
+                    </a>
+                {% endif %}
+            </nav>
+            
+            <div class="mt-auto pt-4 border-top">
+                <div class="d-flex align-items-center gap-3 mb-3 px-2">
+                    <div class="avatar-circle" style="width: 40px; height: 40px; background: var(--green); font-size: 16px;">
+                        {{ session.get('username')[0]|upper if session.get('username') else 'U' }}
+                    </div>
+                    <div class="overflow-hidden">
+                        <div class="fw-bold text-truncate" style="font-size: 14px;">{{ session.get('username') }}</div>
+                        <div class="text-muted text-capitalize" style="font-size: 11px; letter-spacing: 0.05em;">{{ session.get('role') }}</div>
+                    </div>
+                </div>
+                <a href="{{ url_for('auth.logout') }}" class="nav-item text-danger">
+                    <i class="fas fa-sign-out-alt"></i><span>Sign Out</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Mobile sidebar (offcanvas). Content is cloned from #sidebarDesktop via JS. -->
+        <div class="offcanvas offcanvas-start sidebar-offcanvas d-md-none" tabindex="-1" id="sidebarOffcanvas" aria-labelledby="sidebarOffcanvasLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="sidebarOffcanvasLabel">Menu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            </div>
+            <div class="offcanvas-body p-0">
+                <div class="sidebar sidebar--offcanvas p-3" id="sidebarOffcanvasBody"></div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            {% if request.endpoint != 'main.home' %}
+            <header class="header">
+                <div class="d-flex align-items-center gap-2">
+                    {% if session.get('user_id') %}
+                    <button class="btn btn-ghost btn-sm d-md-none sidebar-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarOffcanvas" aria-controls="sidebarOffcanvas">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    {% endif %}
+                    <h2 class="h5 mb-0 fw-bold">{% block header_title %}Dashboard{% endblock %}</h2>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-muted small d-none d-md-block" id="current-date"></span>
+                    <a href="{{ url_for('main.home') }}" class="btn btn-ghost btn-sm">
+                        <i class="fas fa-home"></i> Back to Site
+                    </a>
+                </div>
+            </header>
+            {% endif %}
+            
+            <div class="content-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show fade-in" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                {% block content %}{% endblock %}
+            </div>
+            
+            {% if request.endpoint == 'main.home' %}
+            <!-- Landing Page Footer (simplified) -->
+            <footer class="py-4 bg-white border-top text-center mt-auto">
+                <p class="text-muted small mb-0">&copy; 2026 Medicare Hospital. All rights reserved.</p>
+            </footer>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Set current date in header
+        const dateEl = document.getElementById('current-date');
+        if (dateEl) {
+            const now = new Date();
+            const dd = String(now.getDate()).padStart(2, '0');
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const yy = String(now.getFullYear()).slice(-2);
+            dateEl.textContent = `${dd}-${mm}-${yy}`;
+        }
+
+        // Clone desktop sidebar into the mobile offcanvas so we don't duplicate Jinja markup.
+        document.addEventListener('DOMContentLoaded', function () {
+            const desktop = document.getElementById('sidebarDesktop');
+            const mobileBody = document.getElementById('sidebarOffcanvasBody');
+            if (desktop && mobileBody && mobileBody.childElementCount === 0) {
+                mobileBody.innerHTML = desktop.innerHTML;
+            }
+
+            // On mobile, close the offcanvas after clicking a navigation link.
+            const offcanvasEl = document.getElementById('sidebarOffcanvas');
+            if (offcanvasEl) {
+                offcanvasEl.addEventListener('click', function (e) {
+                    const a = e.target && e.target.closest ? e.target.closest('a') : null;
+                    if (!a) return;
+                    const inst = bootstrap.Offcanvas.getInstance(offcanvasEl);
+                    if (inst) inst.hide();
+                });
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
+

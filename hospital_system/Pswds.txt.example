@@ -1,0 +1,15 @@
+# Pswds.txt.example
+# This file contains placeholder values. Replace with your real credentials locally.
+# DO NOT commit real secrets to a public repo.
+
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_NAME=your_db_name
+DB_HOST=localhost
+
+EMAIL_USER=your_email@example.com
+EMAIL_PASSWORD=your_email_password
+
+# To use locally: copy this file to `Pswds.txt` and fill real values.
+# Example (PowerShell):
+# cp .\Pswds.txt.example .\Pswds.txt

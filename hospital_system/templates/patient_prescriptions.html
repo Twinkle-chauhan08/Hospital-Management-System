@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}My E-Prescriptions{% endblock %}
+{% block header_title %}My E-Prescriptions{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold"><i class="fas fa-prescription-bottle-alt me-2 text-green"></i>Prescription History</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if prescriptions %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Appointment</th>
+                        <th>Doctor</th>
+                        <th>Date</th>
+                        <th>Prescription</th>
+                        <th>View</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in prescriptions %}
+                    <tr>
+                        <td>#{{ p.appointment_id }}</td>
+                        <td>Dr. {{ p.doctor_name }}<small class="text-muted d-block">{{ p.doctor_specialization }}</small></td>
+                        <td>{{ p.appointment_date|dmy }} <small class="text-muted d-block">{{ p.appointment_time }}</small></td>
+                        <td>
+                            {% if p.prescription %}
+                            <span class="small">{{ p.prescription[:80] }}{% if p.prescription|length > 80 %}...{% endif %}</span>
+                            {% else %}
+                            <span class="text-muted small">Waiting for doctor update</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{{ url_for('patient.patient_prescription_view', appointment_id=p.appointment_id) }}" class="btn btn-sm btn-green">
+                                <i class="fas fa-eye me-1"></i> Open
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">No e-prescriptions found yet.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

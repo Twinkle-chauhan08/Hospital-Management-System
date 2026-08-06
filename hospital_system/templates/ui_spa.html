@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MediCare Plus - Hospital Management System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { box-sizing: border-box; font-family: 'Plus Jakarta Sans', sans-serif; }
+    .gradient-bg { background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 50%, #0369a1 100%); }
+    .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+    .soft-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); }
+    .card-hover { transition: all 0.3s ease; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12); }
+    .sidebar-item { transition: all 0.2s ease; }
+    .sidebar-item:hover, .sidebar-item.active { background: linear-gradient(90deg, rgba(14, 165, 233, 0.15) 0%, transparent 100%); border-left: 3px solid #0ea5e9; }
+    .notification-badge { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+    .fade-in { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .chart-bar { transition: height 0.5s ease; }
+    .health-indicator { transition: all 0.3s ease; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+</head>
+<body class="h-full bg-slate-50">
+  <div id="app" class="h-full overflow-auto"></div>
+  <script>
+    const defaultConfig = {
+      hospital_name: "MediCare Plus",
+      tagline: "Smart Healthcare Management System",
+      primary_color: "#0ea5e9",
+      secondary_color: "#10b981",
+      background_color: "#f8fafc",
+      text_color: "#1e293b",
+      accent_color: "#0284c7"
+    };
+    let config = { ...defaultConfig };
+    let currentPage = 'landing';
+    let currentRole = null;
+    let notificationsOpen = false;
+    let mobileMenuOpen = false;
+
+    const sampleData = {
+      patients: [
+        { id: 1, name: "John Smith", age: 45, disease: "Diabetes", status: "Active", doctor: "Dr. Sarah Johnson" },
+        { id: 2, name: "Emily Davis", age: 32, disease: "Hypertension", status: "Active", doctor: "Dr. Michael Chen" },
+        { id: 3, name: "Robert Wilson", age: 58, disease: "Cardiac", status: "Recovered", doctor: "Dr. Sarah Johnson" },
+        { id: 4, name: "Maria Garcia", age: 28, disease: "Asthma", status: "Active", doctor: "Dr. Lisa Patel" }
+      ],
+      doctors: [
+        { id: 1, name: "Dr. Sarah Johnson", specialization: "Cardiology", patients: 45, available: true },
+        { id: 2, name: "Dr. Michael Chen", specialization: "General Medicine", patients: 62, available: true },
+        { id: 3, name: "Dr. Lisa Patel", specialization: "Pulmonology", patients: 38, available: false },
+        { id: 4, name: "Dr. James Brown", specialization: "Neurology", patients: 29, available: true }
+      ],
+      appointments: [
+        { id: 1, patient: "John Smith", doctor: "Dr. Sarah Johnson", date: "2025-01-15", time: "09:00 AM", status: "Confirmed" },
+        { id: 2, patient: "Emily Davis", doctor: "Dr. Michael Chen", date: "2025-01-15", time: "10:30 AM", status: "Pending" },
+        { id: 3, patient: "Robert Wilson", doctor: "Dr. Sarah Johnson", date: "2025-01-15", time: "02:00 PM", status: "Confirmed" }
+      ],
+      notifications: [
+        { id: 1, message: "New appointment booked by John Smith", time: "5 min ago", read: false },
+        { id: 2, message: "Appointment confirmed for Emily Davis", time: "1 hour ago", read: false },
+        { id: 3, message: "New patient registration completed", time: "2 hours ago", read: true }
+      ]
+    };
+
+    const icons = {
+      hospital: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" /></svg>',
+      users: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>',
+      doctor: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>',
+      calendar: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>',
+      chart: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>',
+      bell: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" /></svg>',
+      home: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>',
+      money: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+      clipboard: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" /></svg>',
+      heart: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>',
+      check: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+      plus: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>',
+      menu: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>',
+      close: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>',
+      logout: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>',
+      shield: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>',
+      printer: '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z" /></svg>'
+    };
+
+    function navigate(page, role = null) {
+      currentPage = page;
+      if (role) currentRole = role;
+      notificationsOpen = false;
+      mobileMenuOpen = false;
+      render();
+    }
+    function toggleNotifications() { notificationsOpen = !notificationsOpen; render(); }
+    function toggleMobileMenu() { mobileMenuOpen = !mobileMenuOpen; render(); }
+
+    function renderLandingPage() {
+      return `
+        <div class="min-h-full bg-gradient-to-b from-sky-50 to-white">
+          <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-sky-100">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center text-white">${icons.hospital}</div>
+                  <span class="text-xl font-bold text-sky-900" id="hospital-name-nav">${config.hospital_name || defaultConfig.hospital_name}</span>
+                </div>
+                <div class="hidden md:flex items-center gap-8">
+                  <a href="#about" class="text-slate-600 hover:text-sky-600 transition font-medium">About</a>
+                  <a href="#services" class="text-slate-600 hover:text-sky-600 transition font-medium">Services</a>
+                  <a href="#why-us" class="text-slate-600 hover:text-sky-600 transition font-medium">Why Us</a>
+                  <button onclick="navigate('login')" class="px-5 py-2.5 bg-sky-600 text-white rounded-xl font-semibold hover:bg-sky-700 transition shadow-lg shadow-sky-200">Login</button>
+                </div>
+                <button onclick="toggleMobileMenu()" class="md:hidden text-slate-600">${mobileMenuOpen ? icons.close : icons.menu}</button>
+              </div>
+            </div>
+            ${mobileMenuOpen ? `
+              <div class="md:hidden bg-white border-t border-sky-100 py-4 px-4 space-y-3">
+                <a href="#about" class="block py-2 text-slate-600 hover:text-sky-600 transition font-medium">About</a>
+                <a href="#services" class="block py-2 text-slate-600 hover:text-sky-600 transition font-medium">Services</a>
+                <a href="#why-us" class="block py-2 text-slate-600 hover:text-sky-600 transition font-medium">Why Us</a>
+                <button onclick="navigate('login')" class="w-full px-5 py-2.5 bg-sky-600 text-white rounded-xl font-semibold hover:bg-sky-700 transition">Login</button>
+              </div>` : ''}
+          </nav>
+          <section class="relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-sky-600/10 to-emerald-600/10"></div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+              <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="fade-in">
+                  <div class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-100 text-emerald-700 rounded-full text-sm font-semibold mb-6">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>24/7 Healthcare Services
+                  </div>
+                  <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 leading-tight mb-6" id="hospital-name-hero">${config.hospital_name || defaultConfig.hospital_name}</h1>
+                  <p class="text-xl md:text-2xl text-sky-600 font-semibold mb-4" id="tagline-hero">${config.tagline || defaultConfig.tagline}</p>
+                  <p class="text-slate-600 text-lg mb-8 leading-relaxed">Experience world-class healthcare with our state-of-the-art facilities and dedicated medical professionals. Your health is our priority.</p>
+                  <div class="flex flex-wrap gap-4">
+                    <button onclick="navigate('login')" class="px-8 py-4 bg-sky-600 text-white rounded-2xl font-bold text-lg hover:bg-sky-700 transition shadow-xl shadow-sky-200 hover:shadow-sky-300 hover:scale-105 transform">Get Started</button>
+                    <button onclick="navigate('booking')" class="px-8 py-4 bg-white text-sky-600 border-2 border-sky-200 rounded-2xl font-bold text-lg hover:bg-sky-50 hover:border-sky-300 transition">Book Appointment</button>
+                  </div>
+                </div>
+                <div class="relative fade-in">
+                  <div class="absolute -inset-4 bg-gradient-to-r from-sky-400 to-emerald-400 rounded-3xl blur-2xl opacity-20"></div>
+                  <div class="relative bg-white rounded-3xl p-8 soft-shadow">
+                    <svg viewBox="0 0 400 300" class="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="buildingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" style="stop-color:#0ea5e9"/><stop offset="100%" style="stop-color:#0284c7"/>
+                        </linearGradient>
+                        <linearGradient id="grassGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                          <stop offset="0%" style="stop-color:#10b981"/><stop offset="100%" style="stop-color:#059669"/>
+                        </linearGradient>
+                      </defs>
+                      <rect width="400" height="220" fill="#f0f9ff"/>
+                      <ellipse cx="80" cy="50" rx="30" ry="15" fill="white"/><ellipse cx="100" cy="45" rx="25" ry="12" fill="white"/>
+                      <ellipse cx="320" cy="70" rx="35" ry="18" fill="white"/><ellipse cx="350" cy="65" rx="28" ry="14" fill="white"/>
+                      <rect y="220" width="400" height="80" fill="url(#grassGrad)"/>
+                      <rect x="100" y="80" width="200" height="140" fill="url(#buildingGrad)" rx="10"/>
+                      <rect x="120" y="100" width="40" height="30" fill="#bae6fd" rx="5"/><rect x="180" y="100" width="40" height="30" fill="#bae6fd" rx="5"/><rect x="240" y="100" width="40" height="30" fill="#bae6fd" rx="5"/>
+                      <rect x="120" y="150" width="40" height="30" fill="#bae6fd" rx="5"/><rect x="180" y="150" width="40" height="30" fill="#bae6fd" rx="5"/><rect x="240" y="150" width="40" height="30" fill="#bae6fd" rx="5"/>
+                      <rect x="175" y="190" width="50" height="30" fill="#0369a1" rx="5"/>
+                      <rect x="185" y="55" width="30" height="8" fill="#ef4444" rx="2"/><rect x="196" y="44" width="8" height="30" fill="#ef4444" rx="2"/>
+                      <circle cx="60" cy="200" r="25" fill="#059669"/><rect x="55" y="215" width="10" height="25" fill="#92400e"/>
+                      <circle cx="340" cy="195" r="30" fill="#059669"/><rect x="335" y="215" width="10" height="25" fill="#92400e"/>
+                      <rect x="30" y="235" width="60" height="30" fill="white" rx="5"/><rect x="70" y="235" width="20" height="30" fill="#0ea5e9" rx="0 5 5 0"/>
+                      <circle cx="45" cy="270" r="8" fill="#374151"/><circle cx="75" cy="270" r="8" fill="#374151"/><text x="40" y="255" fill="#ef4444" font-size="12" font-weight="bold">+</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+          <section class="py-12 bg-white">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                ${[
+                  { value: '10K+', label: 'Patients Served', icon: icons.users },
+                  { value: '50+', label: 'Expert Doctors', icon: icons.doctor },
+                  { value: '99%', label: 'Success Rate', icon: icons.check },
+                  { value: '24/7', label: 'Emergency Care', icon: icons.heart }
+                ].map(stat => `
+                  <div class="text-center p-6 rounded-2xl bg-gradient-to-br from-sky-50 to-white border border-sky-100 card-hover">
+                    <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center">${stat.icon}</div>
+                    <div class="text-3xl font-bold text-sky-600">${stat.value}</div>
+                    <div class="text-slate-600 text-sm font-medium mt-1">${stat.label}</div>
+                  </div>`).join('')}
+              </div>
+            </div>
+          </section>
+          <footer class="bg-slate-900 text-white py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div class="grid md:grid-cols-4 gap-8">
+                <div class="md:col-span-2">
+                  <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-sky-500 flex items-center justify-center">${icons.hospital}</div>
+                    <span class="text-xl font-bold">${config.hospital_name || defaultConfig.hospital_name}</span>
+                  </div>
+                  <p class="text-slate-400 mb-4 leading-relaxed">Providing quality healthcare services for over 25 years. Your health and well-being are our top priorities.</p>
+                  <div class="flex gap-3">
+                    ${['📧', '📞', '📍'].map(icon => `<div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-lg cursor-pointer hover:bg-slate-700 transition">${icon}</div>`).join('')}
+                  </div>
+                </div>
+                <div>
+                  <h4 class="font-bold text-lg mb-4">Quick Links</h4>
+                  <ul class="space-y-2">
+                    ${['About Us', 'Our Services', 'Find a Doctor', 'Book Appointment'].map(link => `<li><a href="#" class="text-slate-400 hover:text-white transition">${link}</a></li>`).join('')}
+                  </ul>
+                </div>
+                <div>
+                  <h4 class="font-bold text-lg mb-4">Contact Info</h4>
+                  <ul class="space-y-3 text-slate-400">
+                    <li class="flex items-center gap-2">📍 123 Healthcare Ave, Medical City</li>
+                    <li class="flex items-center gap-2">📞 +1 (555) 123-4567</li>
+                    <li class="flex items-center gap-2">📧 info@medicare.com</li>
+                    <li class="flex items-center gap-2">⏰ 24/7 Emergency Services</li>
+                  </ul>
+                </div>
+              </div>
+              <div class="border-t border-slate-800 mt-8 pt-8 text-center text-slate-500">
+                <p>© 2025 ${config.hospital_name || defaultConfig.hospital_name}. All rights reserved. | University Mini Project</p>
+              </div>
+            </div>
+          </footer>
+        </div>`;
+    }
+
+    function renderLoginPage() {
+      return `
+        <div class="min-h-full bg-gradient-to-br from-sky-600 via-sky-700 to-emerald-600 flex items-center justify-center p-4">
+          <div class="w-full max-w-5xl">
+            <div class="text-center mb-8 fade-in">
+              <div class="inline-flex items-center gap-3 mb-4">
+                <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white">${icons.hospital}</div>
+                <span class="text-2xl font-bold text-white">${config.hospital_name || defaultConfig.hospital_name}</span>
+              </div>
+              <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">Welcome Back</h1>
+              <p class="text-sky-100">Select your role and sign in to continue</p>
+            </div>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 fade-in">
+              ${[
+                { role: 'admin', title: 'Admin', icon: '👑', desc: 'System Management' },
+                { role: 'doctor', title: 'Doctor', icon: '👨‍⚕️', desc: 'Patient Care' },
+                { role: 'receptionist', title: 'Receptionist', icon: '💼', desc: 'Front Desk' },
+                { role: 'patient', title: 'Patient', icon: '🧑', desc: 'Healthcare Access' }
+              ].map(item => `
+                <div onclick="navigate('${item.role}-dashboard', '${item.role}')" class="bg-white/10 backdrop-blur-lg rounded-2xl p-6 cursor-pointer hover:bg-white/20 transition-all border border-white/20 card-hover text-center group">
+                  <div class="text-4xl mb-3 group-hover:scale-110 transition-transform">${item.icon}</div>
+                  <h3 class="text-white font-bold text-lg">${item.title}</h3>
+                  <p class="text-sky-200 text-sm">${item.desc}</p>
+                </div>`).join('')}
+            </div>
+            <div class="bg-white rounded-3xl p-8 soft-shadow max-w-md mx-auto fade-in">
+              <h2 class="text-2xl font-bold text-slate-900 mb-6 text-center">Sign In</h2>
+              <form onsubmit="event.preventDefault(); navigate(currentRole ? currentRole + '-dashboard' : 'patient-dashboard');">
+                <div class="space-y-4">
+                  <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
+                    <input type="email" placeholder="Enter your email" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Password</label>
+                    <input type="password" placeholder="Enter your password" required class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-sky-500 focus:ring-2 focus:ring-sky-200 outline-none transition">
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" class="w-4 h-4 rounded text-sky-600 focus:ring-sky-500"><span class="text-sm text-slate-600">Remember me</span></label>
+                    <a href="#" class="text-sm text-sky-600 hover:text-sky-700 font-medium">Forgot Password?</a>
+                  </div>
+                  <button type="submit" class="w-full py-3 bg-sky-600 text-white rounded-xl font-bold hover:bg-sky-700 transition shadow-lg shadow-sky-200">Sign In</button>
+                </div>
+              </form>
+            </div>
+            <div class="text-center mt-6">
+              <button onclick="navigate('landing')" class="text-white/80 hover:text-white transition font-medium">← Back to Home</button>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function render() {
+      const app = document.getElementById('app');
+      switch (currentPage) {
+        case 'landing': app.innerHTML = renderLandingPage(); break;
+        case 'login': app.innerHTML = renderLoginPage(); break;
+        default: app.innerHTML = renderLandingPage();
+      }
+    }
+
+    async function initApp() {
+      render();
+    }
+    initApp();
+  </script>
+</body>
+</html>

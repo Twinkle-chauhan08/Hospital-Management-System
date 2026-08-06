@@ -1,0 +1,387 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Appointments - Hospital Management System{% endblock %}
+
+{% block header_title %}My Appointments{% endblock %}
+
+{% block content %}
+<div class="fade-up">
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('doctor.doctor_appointments') }}" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="date" class="form-label fw-bold"><i class="fas fa-calendar-day me-1"></i> Select Date</label>
+                    <input type="date" id="date" name="date" class="form-control" value="{{ selected_date }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="view" class="form-label fw-bold"><i class="fas fa-list me-1"></i> View Type</label>
+                    <select id="view" name="view" class="form-select">
+                        <option value="completed" {% if view_mode == 'completed' %}selected{% endif %}>Completed Appointments</option>
+                        <option value="visited" {% if view_mode == 'visited' %}selected{% endif %}>Visited Follow-up Patients</option>
+                        <option value="remaining" {% if view_mode == 'remaining' %}selected{% endif %}>Remaining Patients to Consult</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-blue w-100">
+                        <i class="fas fa-filter me-1"></i> Apply
+                    </button>
+                </div>
+                <div class="col-md-3 text-md-end">
+                    <div class="small text-muted">Completed: <strong>{{ completed_count }}</strong></div>
+                    <div class="small text-muted">Visited Follow-up: <strong>{{ visited_count }}</strong></div>
+                    <div class="fw-bold text-green">Remaining: {{ remaining_count }}</div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if appointments %}
+    <div class="card">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-calendar-check me-2 text-green"></i>
+                {% if view_mode == 'completed' %}
+                Completed Appointments for {{ selected_date|dmy }}
+                {% elif view_mode == 'visited' %}
+                Visited Follow-up Patients for {{ selected_date|dmy }}
+                {% elif view_mode == 'remaining' %}
+                Remaining Patients to Consult for {{ selected_date|dmy }}
+                {% else %}
+                Appointments for {{ selected_date|dmy }}
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Patient</th>
+                            <th>Disease</th>
+                            <th>Date & Time</th>
+                            <th>Status</th>
+                            <th>Reason</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                        <tr>
+                            <td><strong>#{{ appointment.appointment_id }}</strong></td>
+                            <td>{{ appointment.patient_name }}</td>
+                            <td><span class="fw-semibold text-dark">{{ appointment.disease or 'N/A' }}</span></td>
+                            <td>
+                                {% if view_mode == 'visited' and appointment.next_visit_date %}
+                                {{ appointment.next_visit_date|dmy }} <br>
+                                {% else %}
+                                {{ appointment.appointment_date|dmy }} <br>
+                                {% endif %}
+                                <small class="text-muted">{{ appointment.appointment_time }}</small>
+                            </td>
+                            <td>
+                                {% if appointment.status == 'Pending' %}
+                                    <span class="badge" style="background: var(--amber-pale); color: var(--amber);">{{ appointment.status }}</span>
+                                {% elif appointment.status == 'Confirmed' %}
+                                    <span class="badge" style="background: var(--blue-pale); color: var(--blue);">{{ appointment.status }}</span>
+                                {% elif appointment.status == 'Completed' %}
+                                    <span class="badge" style="background: var(--green-pale); color: var(--green);">{{ appointment.status }}</span>
+                                {% else %}
+                                    <span class="badge bg-light text-muted">{{ appointment.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td><small class="text-muted">{{ appointment.reason_for_visit or 'N/A' }}</small></td>
+                            <td>
+                                {% if appointment.status == 'Pending' %}
+                                <div class="d-flex gap-2">
+                                    <form method="POST" action="{{ url_for('doctor.confirm_appointment', appointment_id=appointment.appointment_id) }}">
+                                        <input type="hidden" name="return_date" value="{{ selected_date }}">
+                                        <input type="hidden" name="return_view" value="{{ view_mode }}">
+                                        <button type="submit" class="btn btn-sm btn-blue shadow-sm">
+                                            <i class="fas fa-check me-1"></i> Confirm
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('doctor.cancel_appointment', appointment_id=appointment.appointment_id) }}">
+                                        <input type="hidden" name="return_date" value="{{ selected_date }}">
+                                        <input type="hidden" name="return_view" value="{{ view_mode }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm" onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                {% elif appointment.status == 'Confirmed' %}
+                                <div class="d-flex gap-2">
+                                    {% if appointment.is_future %}
+                                    <button type="button" class="btn btn-sm btn-blue shadow-sm" onclick="return showFutureDateAlert('{{ selected_date|dmy }}')">
+                                        <i class="fas fa-plus me-1"></i> Visited
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-green shadow-sm" onclick="return showFutureDateAlert('{{ selected_date|dmy }}')">
+                                        <i class="fas fa-notes-medical me-1"></i> Completed
+                                    </button>
+                                    {% else %}
+                                        {% if appointment.visit_logged_for_selected_date %}
+                                        <button type="button" class="btn btn-sm btn-secondary shadow-sm" disabled title="Visit already saved for this appointment">
+                                            <i class="fas fa-check me-1"></i> Visited Saved
+                                        </button>
+                                        {% else %}
+                                        <button type="button" class="btn btn-sm btn-blue shadow-sm" data-bs-toggle="modal" data-bs-target="#addVisitModal{{ appointment.appointment_id }}">
+                                            <i class="fas fa-plus me-1"></i> Visited
+                                        </button>
+                                        {% endif %}
+                                        <button type="button" class="btn btn-sm btn-green shadow-sm" data-bs-toggle="modal" data-bs-target="#completeModal{{ appointment.appointment_id }}">
+                                            <i class="fas fa-notes-medical me-1"></i> Completed
+                                        </button>
+                                    {% endif %}
+                                    <form method="POST" action="{{ url_for('doctor.cancel_appointment', appointment_id=appointment.appointment_id) }}">
+                                        <input type="hidden" name="return_date" value="{{ selected_date }}">
+                                        <input type="hidden" name="return_view" value="{{ view_mode }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger shadow-sm" onclick="return confirm('Are you sure you want to cancel this appointment?')">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                {% elif appointment.status == 'Completed' %}
+                                    <a href="{{ url_for('doctor.edit_prescription', appointment_id=appointment.appointment_id) }}" class="btn btn-sm btn-green">
+                                        <i class="fas fa-prescription me-1"></i> E-Prescription
+                                    </a>
+                                {% else %}
+                                    <span class="badge bg-light text-muted">{{ appointment.status }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-info fade-in">
+        <i class="fas fa-info-circle me-2"></i>
+        {% if view_mode == 'completed' %}
+        No completed appointments for {{ selected_date|dmy }}.
+        {% elif view_mode == 'visited' %}
+        No visited follow-up patients for {{ selected_date|dmy }}.
+        {% elif view_mode == 'remaining' %}
+        No remaining patients to consult for {{ selected_date|dmy }}.
+        {% else %}
+        No appointment records found for {{ selected_date|dmy }}.
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% if appointments %}
+    {% for appointment in appointments %}
+        {% if appointment.status == 'Confirmed' %}
+            <!-- Add Visit Modal -->
+            <div class="modal fade" id="addVisitModal{{ appointment.appointment_id }}" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold">Record Patient Visit: {{ appointment.patient_name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST" action="{{ url_for('doctor.add_visit', appointment_id=appointment.appointment_id) }}">
+                            <input type="hidden" name="return_date" value="{{ selected_date }}">
+                            <input type="hidden" name="return_view" value="{{ view_mode }}">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="label">Prescription / Medicines</label>
+                                    <textarea name="prescription" class="input" rows="2" placeholder="Enter medicines and dosage..." required></textarea>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="label">BP (e.g. 120/80)</label>
+                                            <input type="text" name="bp" class="input" placeholder="120/80" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="label">Weight (kg)</label>
+                                            <input type="text" name="weight" class="input" placeholder="70" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="label">Treatment Provided / Diagnosis</label>
+                                    <textarea name="treatment" class="input" rows="2" placeholder="Describe treatment/procedure..." required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="label">Next Visit Date *</label>
+                                    <input type="date" name="next_visit_date" class="input next-visit-date" 
+                                           data-appointment-id="{{ appointment.appointment_id }}" 
+                                           min="{{ today_date }}" value="{{ today_date }}" required>
+                                    <small class="text-muted">This is mandatory and patient will be notified.</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="label">Next Visit Time *</label>
+                                    <select name="next_visit_time" class="input next-visit-time" 
+                                            id="nextVisitTime{{ appointment.appointment_id }}" required>
+                                        <option value="">Select a date first</option>
+                                    </select>
+                                    <small class="text-muted">Only available slots are shown.</small>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="label">Report Needed</label>
+                                    <div class="row g-2 mt-1">
+                                        <div class="col-6"><label><input type="checkbox" name="report_needed" value="X-Ray"> X-Ray</label></div>
+                                        <div class="col-6"><label><input type="checkbox" name="report_needed" value="MRI"> MRI</label></div>
+                                        <div class="col-6"><label><input type="checkbox" name="report_needed" value="CT Scan"> CT Scan</label></div>
+                                        <div class="col-6"><label><input type="checkbox" name="report_needed" value="Sonography"> Sonography</label></div>
+                                        <div class="col-6"><label><input type="checkbox" name="report_needed" value="Endoscopy"> Endoscopy</label></div>
+                                        <div class="col-6"><label><input type="checkbox" name="report_needed" value="Blood Test"> Blood Test</label></div>
+                                        <div class="col-6"><label><input type="checkbox" name="report_needed" value="Urine Test"> Urine Test</label></div>
+                                        <div class="col-6"><label><input type="checkbox" name="report_needed" value="ECG"> ECG</label></div>
+                                    </div>
+                                    <input type="text" name="report_other" class="input mt-2" placeholder="Other report (optional)">
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-blue">Save Visit</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completion Modal -->
+            <div class="modal fade" id="completeModal{{ appointment.appointment_id }}" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold">Complete Visit: {{ appointment.patient_name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form method="POST" action="{{ url_for('doctor.complete_appointment', appointment_id=appointment.appointment_id) }}">
+                            <input type="hidden" name="return_date" value="{{ selected_date }}">
+                            <input type="hidden" name="return_view" value="{{ view_mode }}">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <div class="alert alert-warning mb-2">
+                                        Are you sure the treatment is completed?
+                                    </div>
+                                    <label class="d-flex align-items-center gap-2">
+                                        <input type="checkbox" name="confirm_complete" value="yes" required>
+                                        <span>I confirm this treatment is completed.</span>
+                                    </label>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="label">Final Prescription *</label>
+                                    <textarea name="final_prescription" class="input" rows="3" placeholder="Enter final prescription to handover..." required></textarea>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-green">Complete & Handover</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showFutureDateAlert(selectedDate) {
+    alert(`You can't enter details before the actual visit date.\nSelected date: ${selectedDate}`);
+    return false;
+}
+
+// Slot booking for next visit
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInputs = document.querySelectorAll('.next-visit-date');
+    
+    // Function to fetch and populate slots
+    function fetchAndPopulateSlots(dateInput) {
+        const date = dateInput.value;
+        const apptId = dateInput.dataset.appointmentId;
+        const timeSelect = document.getElementById('nextVisitTime' + apptId);
+        
+        if (!date) {
+            timeSelect.innerHTML = '<option value="">Select a date first</option>';
+            return;
+        }
+        
+        timeSelect.innerHTML = '<option value="">Checking slots...</option>';
+        
+        fetch(`{{ url_for('doctor.doctor_available_slots') }}?appointment_date=${date}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                        let html = '<option value="">-- Choose Time --</option>';
+                        const now = new Date();
+                        const currentHour = now.getHours();
+                        const currentMinute = now.getMinutes();
+                        const yyyy = now.getFullYear();
+                        const mm = String(now.getMonth() + 1).padStart(2, '0');
+                        const dd = String(now.getDate()).padStart(2, '0');
+                        const isToday = date === `${yyyy}-${mm}-${dd}`;
+                        let selectedTimeSlot = '';
+
+                        data.slots.forEach(slot => {
+                            const [slotHour, slotMinute] = slot.value.split(':').map(Number);
+                            const isPast = isToday && (slotHour < currentHour || (slotHour === currentHour && slotMinute < currentMinute));
+                            if (isPast) {
+                                // Hide past times for today
+                                return;
+                            }
+                            const disabled = slot.disabled ? 'disabled' : '';
+                            const label = slot.disabled ? `${slot.label} (Booked)` : slot.label;
+                            html += `<option value="${slot.value}" ${disabled}>${label}</option>`;
+
+                            // Check if this slot is the current time or the next available slot
+                            if (!slot.disabled && !selectedTimeSlot) {
+                                if (slotHour > currentHour || (slotHour === currentHour && slotMinute >= currentMinute) || !isToday) {
+                                    selectedTimeSlot = slot.value;
+                                }
+                            }
+                        });
+                        timeSelect.innerHTML = html;
+
+                        // Auto-select the current or next available time slot
+                        if (selectedTimeSlot) {
+                            timeSelect.value = selectedTimeSlot;
+                        }
+                    } else {
+                    timeSelect.innerHTML = '<option value="">Error loading slots</option>';
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                timeSelect.innerHTML = '<option value="">Connection error</option>';
+            });
+    }
+
+    dateInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            fetchAndPopulateSlots(this);
+        });
+    });
+
+    // Trigger slot population when modal opens
+    document.querySelectorAll('.modal').forEach(modalEl => {
+        modalEl.addEventListener('shown.bs.modal', function () {
+            const apptId = this.id.replace('addVisitModal', '');
+            const dateInput = this.querySelector('.next-visit-date[data-appointment-id="' + apptId + '"]');
+            if (dateInput) {
+                fetchAndPopulateSlots(dateInput);
+            }
+        });
+    });
+});
+
+setInterval(function () {
+    if (document.visibilityState !== 'visible') return;
+    if (document.querySelector('.modal.show')) return;
+    const currentUrl = new URL(window.location.href);
+    window.location.href = currentUrl.toString();
+}, 20000);
+</script>
+{% endblock %}

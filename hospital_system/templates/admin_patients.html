@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}View Patients - Hospital Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-5">
+
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="text-hospital">
+                <i class="fas fa-user-injured"></i> All Patients
+            </h3>
+            <p class="text-muted">
+                Total Patients: <strong>{{ patients|length }}</strong>
+            </p>
+        </div>
+    </div>
+
+    {% if patients %}
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover table-bordered align-middle">
+            <thead class="table-dark text-center">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Age</th>
+                    <th>Gender</th>
+                    <th>Disease</th>
+                    <th>Status</th>
+                    <th>Assigned Doctor</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for patient in patients %}
+                <tr>
+                    <!-- REAL DATABASE ID -->
+                    <td class="text-center">
+                        <strong>#{{ patient.patient_id }}</strong>
+                    </td>
+
+                    <td>{{ patient.name }}</td>
+                    <td class="text-center">{{ patient.age }}</td>
+                    <td class="text-center">{{ patient.gender }}</td>
+                    <td>{{ patient.disease }}</td>
+
+                    <!-- STATUS BADGES -->
+                    <td class="text-center">
+                        {% if patient.status == 'Consulted' %}
+                            <span class="badge bg-success px-3">
+                                {{ patient.status }}
+                            </span>
+
+                        {% elif patient.status == 'Assigned to doctor' %}
+                            <span class="badge bg-warning text-dark px-3">
+                                {{ patient.status }}
+                            </span>
+
+                        {% elif patient.status == 'Under Treatment' %}
+                            <span class="badge bg-primary px-3">
+                                {{ patient.status }}
+                            </span>
+
+                        {% elif patient.status == 'Discharged' %}
+                            <span class="badge bg-info text-dark px-3">
+                                {{ patient.status }}
+                            </span>
+
+                        {% else %}
+                            <span class="badge bg-secondary px-3">
+                                {{ patient.status or "New" }}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- DOCTOR NAME -->
+                    <td>
+                        {% if patient.doctor_name %}
+                            <span class="text-success fw-bold">
+                                Dr. {{ patient.doctor_name }}
+                            </span>
+                        {% else %}
+                            <span class="text-danger">
+                                Not Assigned
+                            </span>
+                        {% endif %}
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+
+    {% else %}
+    <div class="alert alert-info text-center">
+        <i class="fas fa-info-circle"></i>
+        No patients found.
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

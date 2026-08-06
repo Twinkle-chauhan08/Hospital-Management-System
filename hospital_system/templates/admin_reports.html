@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Reports - Hospital Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h3 class="text-hospital"><i class="fas fa-chart-line"></i> Admin Reports</h3>
+            <p class="text-muted">Download operational and management reports</p>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                Every report card now supports View mode, CSV export, and PDF export (from the view page).
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">Appointment Register</div>
+                <div class="card-body">
+                    <form method="GET">
+                        <div class="row g-2 mb-2">
+                            <div class="col-md-6"><input type="date" name="date_from" class="form-control" placeholder="From"></div>
+                            <div class="col-md-6"><input type="date" name="date_to" class="form-control" placeholder="To"></div>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6">
+                                <select name="doctor_id" class="form-select">
+                                    <option value="">All Doctors</option>
+                                    {% for doctor in doctors %}
+                                    <option value="{{ doctor.doctor_id }}">Dr. {{ doctor.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <select name="status" class="form-select">
+                                    <option value="">All Status</option>
+                                    <option value="Pending">Pending</option>
+                                    <option value="Confirmed">Confirmed</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-primary" type="submit" formaction="{{ url_for('admin.report_appointment_register_view') }}">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-primary" type="submit" formaction="{{ url_for('admin.report_appointment_register') }}">
+                                <i class="fas fa-download"></i> Download CSV
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">Doctor Performance</div>
+                <div class="card-body">
+                    <form method="GET">
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6"><input type="date" name="date_from" class="form-control"></div>
+                            <div class="col-md-6"><input type="date" name="date_to" class="form-control"></div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-success" type="submit" formaction="{{ url_for('admin.report_doctor_performance_view') }}">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-success" type="submit" formaction="{{ url_for('admin.report_doctor_performance') }}">
+                                <i class="fas fa-download"></i> Download CSV
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white">Daily Hospital Summary</div>
+                <div class="card-body">
+                    <form method="GET">
+                        <div class="mb-3">
+                            <input type="date" name="date" class="form-control">
+                            <small class="text-muted">Leave blank for today</small>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-info" type="submit" formaction="{{ url_for('admin.report_daily_summary_view') }}">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-info text-white" type="submit" formaction="{{ url_for('admin.report_daily_summary') }}">
+                                <i class="fas fa-download"></i> Download CSV
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-warning text-dark">Appointment Status Trend</div>
+                <div class="card-body">
+                    <form method="GET">
+                        <div class="mb-2">
+                            <select name="granularity" class="form-select">
+                                <option value="day">Day-wise</option>
+                                <option value="month">Month-wise</option>
+                            </select>
+                        </div>
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6"><input type="date" name="date_from" class="form-control"></div>
+                            <div class="col-md-6"><input type="date" name="date_to" class="form-control"></div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-warning" type="submit" formaction="{{ url_for('admin.report_appointment_status_trend_view') }}">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-warning" type="submit" formaction="{{ url_for('admin.report_appointment_status_trend') }}">
+                                <i class="fas fa-download"></i> Download CSV
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header bg-secondary text-white">Billing Collection</div>
+                <div class="card-body">
+                    <form method="GET">
+                        <div class="row g-2 mb-3">
+                            <div class="col-md-6"><input type="date" name="date_from" class="form-control"></div>
+                            <div class="col-md-6"><input type="date" name="date_to" class="form-control"></div>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button class="btn btn-outline-secondary" type="submit" formaction="{{ url_for('admin.report_billing_collection_view') }}">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-secondary" type="submit" formaction="{{ url_for('admin.report_billing_collection') }}">
+                                <i class="fas fa-download"></i> Download CSV
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

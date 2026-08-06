@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}Daily Summary View - Hospital Management System{% endblock %}
+{% block header_title %}Daily Summary Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid my-4">
+    <div class="card">
+        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <strong><i class="fas fa-calendar-day me-2"></i>Daily Hospital Summary</strong>
+            <span>Date: {{ summary.selected_date|dmy }}</span>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-4"><div class="border rounded p-3"><small class="text-muted">Total Appointments</small><div class="h5 mb-0">{{ summary.total_appointments }}</div></div></div>
+                <div class="col-md-4"><div class="border rounded p-3"><small class="text-muted">Total Patients Today</small><div class="h5 mb-0">{{ summary.total_patients_today }}</div></div></div>
+                <div class="col-md-4"><div class="border rounded p-3"><small class="text-muted">Doctors Available</small><div class="h5 mb-0">{{ summary.doctors_available }}</div></div></div>
+                <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Pending</small><div class="h5 mb-0">{{ summary.pending }}</div></div></div>
+                <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Confirmed</small><div class="h5 mb-0">{{ summary.confirmed }}</div></div></div>
+                <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Completed</small><div class="h5 mb-0">{{ summary.completed }}</div></div></div>
+                <div class="col-md-3"><div class="border rounded p-3"><small class="text-muted">Cancelled</small><div class="h5 mb-0">{{ summary.cancelled }}</div></div></div>
+                <div class="col-md-4"><div class="border rounded p-3"><small class="text-muted">Bills Generated</small><div class="h5 mb-0">{{ summary.bills_generated }}</div></div></div>
+                <div class="col-md-4"><div class="border rounded p-3"><small class="text-muted">Revenue Today</small><div class="h5 mb-0">Rs {{ '%.2f'|format(summary.revenue_today) }}</div></div></div>
+                <div class="col-md-4"><div class="border rounded p-3"><small class="text-muted">Paid / Unpaid</small><div class="h5 mb-0">Rs {{ '%.2f'|format(summary.paid_today) }} / Rs {{ '%.2f'|format(summary.unpaid_today) }}</div></div></div>
+            </div>
+
+            <div class="mt-4 d-flex gap-2">
+                <a class="btn btn-info text-white" href="{{ url_for('admin.report_daily_summary_pdf', date=summary.selected_date) }}">
+                    <i class="fas fa-file-pdf me-1"></i> Download PDF
+                </a>
+                <a class="btn btn-outline-primary" href="{{ url_for('admin.report_daily_summary', date=summary.selected_date) }}">
+                    <i class="fas fa-file-csv me-1"></i> Download CSV
+                </a>
+                <a class="btn btn-outline-secondary" href="{{ url_for('admin.admin_reports') }}">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Reports
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
